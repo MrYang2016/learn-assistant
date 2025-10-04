@@ -1,103 +1,210 @@
-import Image from "next/image";
+'use client';
+
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthForm } from '@/components/AuthForm';
+import { MainLayout } from '@/components/MainLayout';
+import { KnowledgePointDialog } from '@/components/KnowledgePointDialog';
+import { KnowledgePointList } from '@/components/KnowledgePointList';
+import { ReviewCard } from '@/components/ReviewCard';
+import { useState, useEffect } from 'react';
+import { KnowledgePoint } from '@/lib/supabase';
+import {
+  createKnowledgePoint,
+  updateKnowledgePoint,
+  deleteKnowledgePoint,
+  getAllKnowledgePoints,
+  getTodayReviews,
+  completeReview,
+} from '@/lib/knowledge-service';
+import { toast } from 'sonner';
+import { TabsContent } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, BookOpen } from 'lucide-react';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { user, loading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState('review');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingPoint, setEditingPoint] = useState<KnowledgePoint | null>(null);
+  const [knowledgePoints, setKnowledgePoints] = useState<KnowledgePoint[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [points, todayReviews] = await Promise.all([
+        getAllKnowledgePoints(),
+        getTodayReviews(),
+      ]);
+      setKnowledgePoints(points);
+      setReviews(todayReviews);
+    } catch (error) {
+      console.error('Load data error:', error);
+      toast.error('加载数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveKnowledgePoint = async (question: string, answer: string) => {
+    try {
+      if (editingPoint) {
+        await updateKnowledgePoint(editingPoint.id, question, answer);
+        toast.success('知识点已更新');
+      } else {
+        await createKnowledgePoint(question, answer);
+        toast.success('知识点已添加，复习计划已自动生成');
+      }
+      await loadData();
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error(editingPoint ? '更新失败' : '添加失败');
+      throw error;
+    }
+  };
+
+  const handleDeleteKnowledgePoint = async (id: string) => {
+    try {
+      await deleteKnowledgePoint(id);
+      toast.success('知识点已删除');
+      await loadData();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('删除失败');
+      throw error;
+    }
+  };
+
+  const handleEditClick = (point: KnowledgePoint) => {
+    setEditingPoint(point);
+    setDialogOpen(true);
+  };
+
+  const handleAddClick = () => {
+    setEditingPoint(null);
+    setDialogOpen(true);
+  };
+
+  const handleCompleteReview = async (scheduleId: string, recallText: string) => {
+    try {
+      await completeReview(scheduleId, recallText);
+      toast.success('复习已完成');
+      await loadData();
+    } catch (error) {
+      console.error('Complete review error:', error);
+      toast.error('操作失败');
+      throw error;
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+          <p className="mt-2 text-sm text-muted-foreground">加载中...</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthForm />;
+  }
+
+  return (
+    <>
+      <MainLayout
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onAddClick={activeTab === 'manage' ? handleAddClick : undefined}
+      >
+        <TabsContent value="review" className="mt-0">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Calendar className="h-6 w-6" />
+                  今日复习
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  使用主动回忆来加深记忆
+                </p>
+              </div>
+              <Badge variant="secondary" className="text-lg px-4 py-2">
+                {reviews.length} 个待复习
+              </Badge>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-lg font-medium">今天没有需要复习的内容</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  继续添加新知识点或等待下次复习
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <ReviewCard
+                    key={review.id}
+                    question={review.knowledge_points.question}
+                    answer={review.knowledge_points.answer}
+                    reviewNumber={review.review_number}
+                    reviewDate={review.review_date}
+                    onComplete={(recallText) => handleCompleteReview(review.id, recallText)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="manage" className="mt-0">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <BookOpen className="h-6 w-6" />
+                知识点管理
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                管理你的所有知识点
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+              </div>
+            ) : (
+              <KnowledgePointList
+                points={knowledgePoints}
+                onEdit={handleEditClick}
+                onDelete={handleDeleteKnowledgePoint}
+              />
+            )}
+          </div>
+        </TabsContent>
+      </MainLayout>
+
+      <KnowledgePointDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSaveKnowledgePoint}
+        editingPoint={editingPoint}
+      />
+    </>
   );
 }
