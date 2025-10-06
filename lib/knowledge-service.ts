@@ -1,4 +1,4 @@
-import { supabase, KnowledgePoint, ReviewSchedule } from './supabase';
+import { supabase, KnowledgePoint } from './supabase';
 
 const REVIEW_INTERVALS = [0, 7, 16, 31];
 
@@ -117,4 +117,26 @@ export async function getKnowledgePointWithSchedules(id: string) {
 
   if (error) throw error;
   return data;
+}
+
+export async function createDefaultKnowledgePoints() {
+  const defaultKnowledgePoints = [
+    {
+      question: '什么是主动回忆？',
+      answer: '主动回忆是一种学习技巧，通过主动尝试从记忆中提取信息来强化学习效果。与被动阅读不同，主动回忆要求你主动思考并尝试回忆所学内容，这能更好地巩固记忆并提高长期保留率。'
+    },
+    {
+      question: '什么是分散学习？',
+      answer: '分散学习（Spaced Repetition）是一种学习策略，通过在不同时间间隔重复学习相同内容来优化记忆效果。相比集中学习，分散学习能更好地将信息从短期记忆转移到长期记忆，提高学习效率和记忆持久性。'
+    }
+  ];
+
+  const createdPoints = [];
+
+  for (const point of defaultKnowledgePoints) {
+    const knowledgePoint = await createKnowledgePoint(point.question, point.answer);
+    createdPoints.push(knowledgePoint);
+  }
+
+  return createdPoints;
 }

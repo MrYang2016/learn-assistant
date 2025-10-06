@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
+import { User, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { createDefaultKnowledgePoints } from '@/lib/knowledge-service';
 
 interface AuthContextType {
   user: User | null;
@@ -24,10 +25,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
-        setUser(session?.user ?? null);
-      })();
+    supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
+      setUser(session?.user ?? null);
+
+      // 当用户首次登录时，检查是否需要创建默认知识点
+      if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          // 检查用户是否已有知识点，如果没有则创建默认知识点
+          const { data: existingPoints } = await supabase
+            .from('knowledge_points')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .limit(1);
+
+          if (!existingPoints || existingPoints.length === 0) {
+            await createDefaultKnowledgePoints();
+            // 创建默认知识点后刷新页面以显示新内容
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error('Failed to create default knowledge points:', error);
+        }
+      }
     });
   }, []);
 
