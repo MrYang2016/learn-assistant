@@ -1,6 +1,6 @@
 import { supabase, KnowledgePoint } from './supabase';
 
-const REVIEW_INTERVALS = [0, 7, 16, 31];
+const REVIEW_INTERVALS = [1, 7, 16, 35];
 
 export async function createKnowledgePoint(question: string, answer: string) {
   const { data: { user } } = await supabase.auth.getUser();
