@@ -1,17 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { match } from '@formatjs/intl-localematcher';
 import Negotiator from 'negotiator';
 
 let locales = ['en', 'zh'];
 let defaultLocale = 'en';
 
-function getLocale(request) {
+function getLocale(request: NextRequest) {
   let headers = { 'accept-language': request.headers.get('accept-language') || '' };
   let languages = new Negotiator({ headers }).languages();
   return match(languages, locales, defaultLocale);
 }
 
-export function middleware(request) {
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const pathnameIsMissingLocale = locales.every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`

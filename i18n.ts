@@ -15,7 +15,10 @@ export async function getMessages(locale: string) {
 
 export const { Link, redirect, usePathname, useRouter } = createNavigation({ locales });
 
-export default getRequestConfig(async ({ locale }) => ({
-  locale,
-  messages: await (await import(`./messages/${locale}.json`)).default
-}));
+export default getRequestConfig(async ({ locale }) => {
+  const safeLocale = locale ?? 'en';
+  return {
+    locale: safeLocale,
+    messages: await getMessages(safeLocale)
+  }
+});
