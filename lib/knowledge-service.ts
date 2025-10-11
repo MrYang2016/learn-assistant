@@ -9,15 +9,14 @@ export async function createKnowledgePoint(question: string, answer: string, acc
   }
 
   // 获取用户信息
-  const userResponse = await supabaseFetch.getUser(accessToken);
-  const user = userResponse.user;
+  const user = await supabaseFetch.getUser(accessToken);
   
   if (!user) {
     throw new Error('Not authenticated');
   }
 
   // 创建知识点
-  const knowledgePoint = await supabaseFetch.insert<KnowledgePoint>(
+  const knowledgePointResponse = await supabaseFetch.insert<KnowledgePoint[]>(
     'knowledge_points',
     {
       user_id: user.id,
@@ -27,6 +26,8 @@ export async function createKnowledgePoint(question: string, answer: string, acc
     { columns: '*' },
     accessToken
   );
+  
+  const knowledgePoint = knowledgePointResponse[0];
 
   // 创建复习计划
   const schedules = REVIEW_INTERVALS.map((days, index) => {
@@ -48,13 +49,14 @@ export async function createKnowledgePoint(question: string, answer: string, acc
 }
 
 export async function updateKnowledgePoint(id: string, question: string, answer: string, accessToken?: string) {
-  return supabaseFetch.update(
+  const response = await supabaseFetch.update<KnowledgePoint[]>(
     'knowledge_points',
     { question, answer, updated_at: new Date().toISOString() },
     { id },
     { columns: '*' },
     accessToken
   );
+  return response[0];
 }
 
 export async function deleteKnowledgePoint(id: string, accessToken?: string) {

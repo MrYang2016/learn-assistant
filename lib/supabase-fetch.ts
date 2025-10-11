@@ -165,9 +165,13 @@ class SupabaseFetchClient {
     const queryString = this.buildQueryParams(params);
     const endpoint = queryString ? `${table}?${queryString}` : table;
     
+    // 当有 columns 参数时，使用 return=representation 来获取插入的数据
+    const headers = options.columns ? { 'Prefer': 'return=representation' } : undefined;
+    
     return this.fetch<T>(endpoint, {
       method: 'POST',
       body: data,
+      headers,
     }, accessToken);
   }
 
@@ -203,9 +207,13 @@ class SupabaseFetchClient {
     const queryString = this.buildQueryParams(params);
     const endpoint = queryString ? `${table}?${queryString}` : table;
     
+    // 当有 columns 参数时，使用 return=representation 来获取更新的数据
+    const headers = options.columns ? { 'Prefer': 'return=representation' } : undefined;
+    
     return this.fetch<T>(endpoint, {
       method: 'PATCH',
       body: data,
+      headers,
     }, accessToken);
   }
 
