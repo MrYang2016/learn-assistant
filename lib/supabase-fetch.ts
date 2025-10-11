@@ -42,7 +42,7 @@ class SupabaseFetchClient {
    */
   private buildQueryParams(params: Record<string, any>): string {
     const searchParams = new URLSearchParams();
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
@@ -52,7 +52,7 @@ class SupabaseFetchClient {
         }
       }
     });
-    
+
     return searchParams.toString();
   }
 
@@ -65,10 +65,10 @@ class SupabaseFetchClient {
     accessToken?: string
   ): Promise<T> {
     const { method = 'GET', headers = {}, body } = options;
-    
+
     const url = `${this.config.url}/rest/v1/${endpoint}`;
     const requestHeaders = this.buildHeaders(accessToken, headers);
-    
+
     const response = await fetch(url, {
       method,
       headers: requestHeaders,
@@ -103,11 +103,11 @@ class SupabaseFetchClient {
     accessToken?: string
   ): Promise<T[]> {
     const params: Record<string, any> = {};
-    
+
     if (options.columns) {
       params.select = options.columns;
     }
-    
+
     if (options.filters) {
       Object.entries(options.filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -120,23 +120,23 @@ class SupabaseFetchClient {
         }
       });
     }
-    
+
     if (options.order) {
       const direction = options.order.ascending !== false ? 'asc' : 'desc';
       params.order = `${options.order.column}.${direction}`;
     }
-    
+
     if (options.limit) {
       params.limit = options.limit;
     }
-    
+
     if (options.offset) {
       params.offset = options.offset;
     }
 
     const queryString = this.buildQueryParams(params);
     const endpoint = queryString ? `${table}?${queryString}` : table;
-    
+
     return this.fetch<T[]>(endpoint, { method: 'GET' }, accessToken);
   }
 
@@ -153,21 +153,21 @@ class SupabaseFetchClient {
     accessToken?: string
   ): Promise<T> {
     const params: Record<string, any> = {};
-    
+
     if (options.columns) {
       params.select = options.columns;
     }
-    
+
     if (options.upsert) {
       params.on_conflict = 'merge-duplicates';
     }
 
     const queryString = this.buildQueryParams(params);
     const endpoint = queryString ? `${table}?${queryString}` : table;
-    
+
     // 当有 columns 参数时，使用 return=representation 来获取插入的数据
     const headers = options.columns ? { 'Prefer': 'return=representation' } : undefined;
-    
+
     return this.fetch<T>(endpoint, {
       method: 'POST',
       body: data,
@@ -188,11 +188,11 @@ class SupabaseFetchClient {
     accessToken?: string
   ): Promise<T> {
     const params: Record<string, any> = {};
-    
+
     if (options.columns) {
       params.select = options.columns;
     }
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         // 如果值已经包含操作符（如 lte., gte., neq. 等），直接使用
@@ -206,10 +206,10 @@ class SupabaseFetchClient {
 
     const queryString = this.buildQueryParams(params);
     const endpoint = queryString ? `${table}?${queryString}` : table;
-    
+
     // 当有 columns 参数时，使用 return=representation 来获取更新的数据
     const headers = options.columns ? { 'Prefer': 'return=representation' } : undefined;
-    
+
     return this.fetch<T>(endpoint, {
       method: 'PATCH',
       body: data,
@@ -226,7 +226,7 @@ class SupabaseFetchClient {
     accessToken?: string
   ): Promise<T> {
     const params: Record<string, any> = {};
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         // 如果值已经包含操作符（如 lte., gte., neq. 等），直接使用
@@ -240,7 +240,7 @@ class SupabaseFetchClient {
 
     const queryString = this.buildQueryParams(params);
     const endpoint = queryString ? `${table}?${queryString}` : table;
-    
+
     return this.fetch<T>(endpoint, { method: 'DELETE' }, accessToken);
   }
 
@@ -318,7 +318,23 @@ class SupabaseFetchClient {
       throw new Error(error.message || `HTTP ${response.status}`);
     }
 
-    return await response.json();
+    // Supabase登出API通常返回空响应（204状态码），不需要解析JSON
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return {};
+    }
+
+    // 如果有内容，尝试解析JSON
+    const responseText = await response.text();
+    if (responseText) {
+      try {
+        return JSON.parse(responseText);
+      } catch (e) {
+        // 如果解析失败，返回空对象
+        return {};
+      }
+    }
+
+    return {};
   }
 
   /**
