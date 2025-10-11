@@ -7,10 +7,20 @@ import { NextIntlClientProvider } from 'next-intl';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: '学习助手 - 分散学习与主动回忆',
-  description: '使用科学的方法提升学习效果',
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const messages = (await import(`../../messages/${locale}.json`)).default;
+
+  return {
+    title: messages.metadata.title,
+    description: messages.metadata.description,
+    icons: '/favicon.svg',
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -25,11 +35,6 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <head>
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/favicon_io/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png" />
-        {/* Add more if needed */}
       </head>
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
