@@ -33,7 +33,7 @@ export function AuthForm() {
     setLoading(true);
     try {
       await signUp(email, password);
-      toast.success('注册成功，请登录');
+      toast.success('注册成功，已自动登录');
     } catch (error: any) {
       toast.error(error.message || '注册失败');
     } finally {

@@ -341,7 +341,6 @@ class SupabaseFetchClient {
     }
 
     const result = await response.json();
-    console.log('getUser response:', result);
     return result;
   }
 

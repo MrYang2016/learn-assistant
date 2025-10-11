@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string) => {
     const response = await supabaseFetch.signUp(email, password);
 
-    // 如果注册成功，创建默认知识点
+    // 如果注册成功，创建默认知识点并自动登录
     if (response.user && response.access_token) {
       try {
         console.log('📚 Creating default knowledge points for new user...');
@@ -123,6 +123,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('❌ Failed to create default knowledge points:', error);
         // 不抛出错误，因为用户注册已经成功
       }
+
+      // 自动设置用户状态，实现自动登录
+      console.log('✅ Sign up successful, setting user state');
+      setUser(response.user);
+      setAccessToken(response.access_token);
+
+      // 保存到localStorage - 使用Supabase的标准格式
+      const authData = {
+        user: response.user,
+        access_token: response.access_token,
+        refresh_token: response.refresh_token,
+        expires_at: response.expires_at,
+        token_type: response.token_type
+      };
+
+      // 尝试找到现有的Supabase key，如果没有则使用默认key
+      const allKeys = Object.keys(localStorage);
+      const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));
+      const authKey = supabaseKeys.length > 0 ? supabaseKeys[0] : 'sb-zuvgcqgetnmhlmjsxjrs-auth-token';
+
+      localStorage.setItem(authKey, JSON.stringify(authData));
+      console.log('💾 Auth data saved to localStorage with key:', authKey);
     }
   };
 
