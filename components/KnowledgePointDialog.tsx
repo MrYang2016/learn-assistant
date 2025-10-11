@@ -13,13 +13,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { KnowledgePoint } from '@/lib/supabase';
+import { KnowledgePointWithSchedule } from '@/lib/supabase';
 
 interface KnowledgePointDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (question: string, answer: string) => Promise<void>;
-  editingPoint?: KnowledgePoint | null;
+  editingPoint?: KnowledgePointWithSchedule | null;
 }
 
 export function KnowledgePointDialog({

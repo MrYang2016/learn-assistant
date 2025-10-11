@@ -7,7 +7,7 @@ import { KnowledgePointDialog } from '@/components/KnowledgePointDialog';
 import { KnowledgePointList } from '@/components/KnowledgePointList';
 import { ReviewCard } from '@/components/ReviewCard';
 import { useState, useEffect } from 'react';
-import { KnowledgePoint } from '@/lib/supabase';
+import { KnowledgePointWithSchedule } from '@/lib/supabase';
 import {
   createKnowledgePoint,
   updateKnowledgePoint,
@@ -19,14 +19,15 @@ import {
 import { toast } from 'sonner';
 import { TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, BookOpen, Plus } from 'lucide-react';
 
 export default function Home() {
   const { user, accessToken, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('review');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingPoint, setEditingPoint] = useState<KnowledgePoint | null>(null);
-  const [knowledgePoints, setKnowledgePoints] = useState<KnowledgePoint[]>([]);
+  const [editingPoint, setEditingPoint] = useState<KnowledgePointWithSchedule | null>(null);
+  const [knowledgePoints, setKnowledgePoints] = useState<KnowledgePointWithSchedule[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +48,7 @@ export default function Home() {
       setReviews(todayReviews);
     } catch (error) {
       console.error('Load data error:', error);
-      
+
       // 降级方案：使用空数据，让用户可以正常使用应用
       setKnowledgePoints([]);
       setReviews([]);
@@ -64,7 +65,7 @@ export default function Home() {
         toast.success('知识点已更新');
       } else {
         await createKnowledgePoint(question, answer, accessToken!);
-        toast.success('知识点已添加，复习计划已自动生成');
+        toast.success('知识点已添加！复习计划：1天后、7天后、16天后、35天后各复习一次');
       }
       await loadData();
     } catch (error) {
@@ -86,7 +87,7 @@ export default function Home() {
     }
   };
 
-  const handleEditClick = (point: KnowledgePoint) => {
+  const handleEditClick = (point: KnowledgePointWithSchedule) => {
     setEditingPoint(point);
     setDialogOpen(true);
   };
@@ -155,9 +156,13 @@ export default function Home() {
               <div className="text-center py-12">
                 <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-lg font-medium">今天没有需要复习的内容</p>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm text-muted-foreground mt-2 mb-6">
                   继续添加新知识点或等待下次复习
                 </p>
+                <Button onClick={handleAddClick} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  新增知识点
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">

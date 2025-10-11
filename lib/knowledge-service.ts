@@ -10,7 +10,7 @@ export async function createKnowledgePoint(question: string, answer: string, acc
 
   // 获取用户信息
   const user = await supabaseFetch.getUser(accessToken);
-  
+
   if (!user) {
     throw new Error('Not authenticated');
   }
@@ -26,7 +26,7 @@ export async function createKnowledgePoint(question: string, answer: string, acc
     { columns: '*' },
     accessToken
   );
-  
+
   const knowledgePoint = knowledgePointResponse[0];
 
   // 创建复习计划
@@ -67,7 +67,7 @@ export async function getAllKnowledgePoints(userId: string, accessToken?: string
   return supabaseFetch.select<KnowledgePoint>(
     'knowledge_points',
     {
-      columns: '*',
+      columns: '*,review_schedules(*)',
       filters: { user_id: userId },
       order: { column: 'created_at', ascending: false }
     },
@@ -77,12 +77,12 @@ export async function getAllKnowledgePoints(userId: string, accessToken?: string
 
 export async function getTodayReviews(userId: string, accessToken?: string) {
   const today = new Date().toISOString().split('T')[0];
-  
+
   return supabaseFetch.select(
     'review_schedules',
     {
       columns: '*,knowledge_points(*)',
-      filters: { 
+      filters: {
         user_id: userId,
         review_date: `lte.${today}`,
         completed: false

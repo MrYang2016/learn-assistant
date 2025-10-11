@@ -25,23 +25,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // 标记为客户端环境
     setIsClient(true);
-    
+
     // 检查localStorage中的认证信息
     const checkAuthState = async () => {
       try {
-        console.log('🔍 Checking auth state...');
-        
+
         // 检查所有可能的localStorage keys
         const allKeys = Object.keys(localStorage);
-        console.log('📋 All localStorage keys:', allKeys);
-        
+
         // 查找Supabase相关的key
         const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));
-        console.log('🔑 Supabase keys found:', supabaseKeys);
-        
+
         let authData = null;
         let authKey = null;
-        
+
         // 尝试从找到的key中获取认证数据
         for (const key of supabaseKeys) {
           try {
@@ -51,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               if (parsed.access_token && parsed.user) {
                 authData = parsed;
                 authKey = key;
-                console.log('✅ Found auth data in key:', key);
                 break;
               }
             }
@@ -59,17 +55,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // 忽略解析错误
           }
         }
-        
+
         if (authData && authKey) {
-          console.log('✅ Found auth data, checking expiration...');
-          
+
           // 检查token是否过期（基于时间）
           const now = Math.floor(Date.now() / 1000);
           const expiresAt = authData.expires_at;
-          
+
           if (expiresAt && now < expiresAt) {
             // Token未过期，直接使用
-            console.log('✅ Token not expired, using cached auth data');
             setUser(authData.user);
             setAccessToken(authData.access_token);
           } else if (authData.refresh_token) {
@@ -81,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 console.log('✅ Token refreshed successfully');
                 setUser(refreshResponse.user);
                 setAccessToken(refreshResponse.access_token);
-                
+
                 // 更新localStorage
                 const updatedAuthData = {
                   user: refreshResponse.user,
@@ -117,7 +111,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    await supabaseFetch.signUp(email, password);
+    const response = await supabaseFetch.signUp(email, password);
+
+    // 如果注册成功，创建默认知识点
+    if (response.user && response.access_token) {
+      try {
+        console.log('📚 Creating default knowledge points for new user...');
+        await createDefaultKnowledgePoints(response.access_token);
+        console.log('✅ Default knowledge points created successfully');
+      } catch (error) {
+        console.error('❌ Failed to create default knowledge points:', error);
+        // 不抛出错误，因为用户注册已经成功
+      }
+    }
   };
 
   const signIn = async (email: string, password: string) => {
@@ -128,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ Sign in successful, setting user state');
       setUser(response.user);
       setAccessToken(response.access_token);
-      
+
       // 保存到localStorage - 使用Supabase的标准格式
       const authData = {
         user: response.user,
@@ -137,12 +143,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         expires_at: response.expires_at,
         token_type: response.token_type
       };
-      
+
       // 尝试找到现有的Supabase key，如果没有则使用默认key
       const allKeys = Object.keys(localStorage);
       const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));
       const authKey = supabaseKeys.length > 0 ? supabaseKeys[0] : 'sb-zuvgcqgetnmhlmjsxjrs-auth-token';
-      
+
       localStorage.setItem(authKey, JSON.stringify(authData));
       console.log('💾 Auth data saved to localStorage with key:', authKey);
     }
@@ -157,11 +163,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Sign out error:', error);
       }
     }
-    
+
     // 清除状态和存储
     setUser(null);
     setAccessToken(null);
-    
+
     // 清除所有Supabase相关的localStorage
     const allKeys = Object.keys(localStorage);
     const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));

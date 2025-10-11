@@ -1,6 +1,6 @@
 'use client';
 
-import { KnowledgePoint } from '@/lib/supabase';
+import { KnowledgePointWithSchedule } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -17,14 +17,27 @@ import {
 import { useState } from 'react';
 
 interface KnowledgePointListProps {
-  points: KnowledgePoint[];
-  onEdit: (point: KnowledgePoint) => void;
+  points: KnowledgePointWithSchedule[];
+  onEdit: (point: KnowledgePointWithSchedule) => void;
   onDelete: (id: string) => Promise<void>;
 }
 
 export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const getNextReviewDate = (point: KnowledgePointWithSchedule) => {
+    if (!point.review_schedules || point.review_schedules.length === 0) {
+      return null;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const upcomingReviews = point.review_schedules
+      .filter(schedule => !schedule.completed && schedule.review_date >= today)
+      .sort((a, b) => new Date(a.review_date).getTime() - new Date(b.review_date).getTime());
+
+    return upcomingReviews.length > 0 ? upcomingReviews[0].review_date : null;
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -50,43 +63,53 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2">
-        {points.map((point) => (
-          <Card key={point.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-lg line-clamp-2">{point.question}</CardTitle>
-                  <CardDescription className="mt-1">
-                    {new Date(point.created_at).toLocaleDateString('zh-CN')}
-                  </CardDescription>
+        {points.map((point) => {
+          const nextReviewDate = getNextReviewDate(point);
+          return (
+            <Card key={point.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-lg line-clamp-2">{point.question}</CardTitle>
+                    <div className="mt-1 space-y-1">
+                      <CardDescription>
+                        创建时间：{new Date(point.created_at).toLocaleDateString('zh-CN')}
+                      </CardDescription>
+                      {nextReviewDate && (
+                        <CardDescription className="text-blue-600 font-medium">
+                          下次复习：{new Date(nextReviewDate).toLocaleDateString('zh-CN')}
+                        </CardDescription>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(point)}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeleteId(point.id)}
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-1 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEdit(point)}
-                    className="h-8 w-8"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setDeleteId(point.id)}
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">
-                {point.answer}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">
+                  {point.answer}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
