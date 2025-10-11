@@ -36,9 +36,10 @@ export default function Home() {
     }
   }, [user]);
 
-  const loadData = async () => {
+  const loadData = async (retryCount = 0) => {
     setLoading(true);
     try {
+      // 添加重试机制和缓存控制
       const [points, todayReviews] = await Promise.all([
         getAllKnowledgePoints(),
         getTodayReviews(),
@@ -47,7 +48,15 @@ export default function Home() {
       setReviews(todayReviews);
     } catch (error) {
       console.error('Load data error:', error);
-      toast.error('加载数据失败');
+
+      // 如果是网络错误且重试次数少于3次，则重试
+      if (retryCount < 3 && (error as any)?.message?.includes('fetch')) {
+        console.log(`Retrying load data, attempt ${retryCount + 1}`);
+        setTimeout(() => loadData(retryCount + 1), 1000 * (retryCount + 1));
+        return;
+      }
+
+      toast.error('加载数据失败，请刷新页面重试');
     } finally {
       setLoading(false);
     }

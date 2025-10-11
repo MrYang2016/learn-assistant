@@ -20,12 +20,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // 初始化时获取当前会话状态
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session error:', error);
+        }
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to get session:', error);
+        setLoading(false);
+      }
+    };
 
-    supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
+    initializeAuth();
+
+    // 监听认证状态变化
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       setUser(session?.user ?? null);
 
       // 当用户首次登录时，检查是否需要创建默认知识点
@@ -40,14 +53,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (!existingPoints || existingPoints.length === 0) {
             await createDefaultKnowledgePoints();
-            // 创建默认知识点后刷新页面以显示新内容
-            window.location.reload();
+            // 不刷新页面，让组件自然重新渲染
+            console.log('Default knowledge points created');
           }
         } catch (error) {
           console.error('Failed to create default knowledge points:', error);
         }
       }
     });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
