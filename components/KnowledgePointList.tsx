@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface KnowledgePointListProps {
   points: KnowledgePointWithSchedule[];
@@ -25,6 +26,9 @@ interface KnowledgePointListProps {
 export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const t = useTranslations();
+  const locale = useLocale();
 
   const getNextReviewDate = (point: KnowledgePointWithSchedule) => {
     if (!point.review_schedules || point.review_schedules.length === 0) {
@@ -55,7 +59,7 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
   if (points.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">还没有知识点，点击上方按钮添加第一个吧</p>
+        <p className="text-muted-foreground">{t('noKnowledgePoints')}</p>
       </div>
     );
   }
@@ -73,11 +77,11 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
                     <CardTitle className="text-lg line-clamp-2">{point.question}</CardTitle>
                     <div className="mt-1 space-y-1">
                       <CardDescription>
-                        创建时间：{new Date(point.created_at).toLocaleDateString('zh-CN')}
+                        {t('createdAt')}{new Date(point.created_at).toLocaleDateString(locale)}
                       </CardDescription>
                       {nextReviewDate && (
                         <CardDescription className="text-blue-600 font-medium">
-                          下次复习：{new Date(nextReviewDate).toLocaleDateString('zh-CN')}
+                          {t('nextReview')}{new Date(nextReviewDate).toLocaleDateString(locale)}
                         </CardDescription>
                       )}
                     </div>
@@ -88,6 +92,7 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
                       size="icon"
                       onClick={() => onEdit(point)}
                       className="h-8 w-8"
+                      aria-label={t('edit')}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -96,6 +101,7 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
                       size="icon"
                       onClick={() => setDeleteId(point.id)}
                       className="h-8 w-8 text-destructive hover:text-destructive"
+                      aria-label={t('delete')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -115,15 +121,15 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              删除此知识点后，相关的复习计划也会被删除。此操作无法撤销。
+              {t('confirmDeleteDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>取消</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-              {deleting ? '删除中...' : '删除'}
+              {deleting ? t('deleting') : t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

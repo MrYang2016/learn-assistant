@@ -21,6 +21,7 @@ import { TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, BookOpen, Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function Home() {
   const { user, accessToken, loading: authLoading, refreshToken } = useAuth();
@@ -30,6 +31,7 @@ export default function Home() {
   const [knowledgePoints, setKnowledgePoints] = useState<KnowledgePointWithSchedule[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useTranslations();
 
   // 通用的API调用包装函数，处理认证错误
   const apiCall = async <T,>(apiFunction: () => Promise<T>): Promise<T> => {
@@ -73,7 +75,7 @@ export default function Home() {
       // 降级方案：使用空数据，让用户可以正常使用应用
       setKnowledgePoints([]);
       setReviews([]);
-      toast.error('数据加载失败，但您可以继续使用应用');
+      toast.error(t('dataLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -83,15 +85,15 @@ export default function Home() {
     try {
       if (editingPoint) {
         await apiCall(() => updateKnowledgePoint(editingPoint.id, question, answer, accessToken!));
-        toast.success('知识点已更新');
+        toast.success(t('pointUpdated'));
       } else {
         await apiCall(() => createKnowledgePoint(question, answer, accessToken!));
-        toast.success('知识点已添加！复习计划：1天后、7天后、16天后、35天后各复习一次');
+        toast.success(t('pointAdded'));
       }
       await loadData();
     } catch (error) {
       console.error('Save error:', error);
-      toast.error(editingPoint ? '更新失败' : '添加失败');
+      toast.error(editingPoint ? t('updateFailed') : t('addFailed'));
       throw error;
     }
   };
@@ -99,11 +101,11 @@ export default function Home() {
   const handleDeleteKnowledgePoint = async (id: string) => {
     try {
       await apiCall(() => deleteKnowledgePoint(id, accessToken!));
-      toast.success('知识点已删除');
+      toast.success(t('pointDeleted'));
       await loadData();
     } catch (error) {
       console.error('Delete error:', error);
-      toast.error('删除失败');
+      toast.error(t('deleteFailed'));
       throw error;
     }
   };
@@ -121,11 +123,11 @@ export default function Home() {
   const handleCompleteReview = async (scheduleId: string, recallText: string) => {
     try {
       await apiCall(() => completeReview(scheduleId, recallText, accessToken!));
-      toast.success('复习已完成');
+      toast.success(t('reviewCompleted'));
       await loadData();
     } catch (error) {
       console.error('Complete review error:', error);
-      toast.error('操作失败');
+      toast.error(t('operationFailed'));
       throw error;
     }
   };
@@ -135,7 +137,7 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-          <p className="mt-2 text-sm text-muted-foreground">加载中...</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     );
@@ -158,14 +160,14 @@ export default function Home() {
               <div>
                 <h2 className="text-2xl font-bold flex items-center gap-2">
                   <Calendar className="h-6 w-6" />
-                  今日复习
+                  {t('todayReview', { count: reviews.length })}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  使用主动回忆来加深记忆
+                  {t('useActiveRecall')}
                 </p>
               </div>
               <Badge variant="secondary" className="text-lg px-4 py-2">
-                {reviews.length} 个待复习
+                {reviews.length} {t('pendingReviews')}
               </Badge>
             </div>
 
@@ -176,13 +178,13 @@ export default function Home() {
             ) : reviews.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-lg font-medium">今天没有需要复习的内容</p>
+                <p className="text-lg font-medium">{t('noReviewsToday')}</p>
                 <p className="text-sm text-muted-foreground mt-2 mb-6">
-                  继续添加新知识点或等待下次复习
+                  {t('continueAddNewPoints')}
                 </p>
                 <Button onClick={handleAddClick} className="gap-2">
                   <Plus className="h-4 w-4" />
-                  新增知识点
+                  {t('addNewPoint')}
                 </Button>
               </div>
             ) : (
@@ -207,10 +209,10 @@ export default function Home() {
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <BookOpen className="h-6 w-6" />
-                知识点管理
+                {t('knowledgePointsManagement')}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                管理你的所有知识点
+                {t('manageYourKnowledgePoints')}
               </p>
             </div>
 

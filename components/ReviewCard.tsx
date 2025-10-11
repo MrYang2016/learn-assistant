@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, CircleCheck as CheckCircle2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface ReviewCardProps {
   question: string;
@@ -27,6 +28,8 @@ export function ReviewCard({
   const [completing, setCompleting] = useState(false);
   const [recallText, setRecallText] = useState('');
 
+  const t = useTranslations();
+
   const handleComplete = async () => {
     setCompleting(true);
     try {
@@ -38,8 +41,11 @@ export function ReviewCard({
   };
 
   const getReviewLabel = (num: number) => {
-    const labels = ['首次复习', '第二次复习', '第三次复习', '第四次复习'];
-    return labels[num - 1] || `第${num}次复习`;
+    if (num === 1) return t('firstReview');
+    if (num === 2) return t('secondReview');
+    if (num === 3) return t('thirdReview');
+    if (num === 4) return t('fourthReview');
+    return t('nthReview', { num });
   };
 
   return (
@@ -55,10 +61,10 @@ export function ReviewCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="recall">写下你的回忆：</Label>
+          <Label htmlFor="recall">{t('recallPrompt')}</Label>
           <Textarea
             id="recall"
-            placeholder="在这里输入你能回忆起的内容..."
+            placeholder={t('recallPlaceholder')}
             value={recallText}
             onChange={(e) => setRecallText(e.target.value)}
             rows={6}
@@ -68,7 +74,7 @@ export function ReviewCard({
 
         <div className="flex items-center justify-between pt-2">
           <p className="text-sm font-medium">
-            {showAnswer ? '正确答案：' : '完成回忆后，点击查看正确答案'}
+            {showAnswer ? t('correctAnswer') : t('showAnswerPrompt')}
           </p>
           <Button
             variant="outline"
@@ -79,12 +85,12 @@ export function ReviewCard({
             {showAnswer ? (
               <>
                 <EyeOff className="h-4 w-4" />
-                隐藏答案
+                {t('hideAnswer')}
               </>
             ) : (
               <>
                 <Eye className="h-4 w-4" />
-                查看答案
+                {t('showAnswer')}
               </>
             )}
           </Button>
@@ -100,7 +106,7 @@ export function ReviewCard({
         <CardFooter>
           <Button onClick={handleComplete} disabled={completing} className="w-full gap-2">
             <CheckCircle2 className="h-4 w-4" />
-            {completing ? '标记中...' : '标记为已复习'}
+            {completing ? t('marking') : t('markAsReviewed')}
           </Button>
         </CardFooter>
       )}

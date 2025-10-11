@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, Calendar, LogOut, Plus } from 'lucide-react';
 import { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -15,6 +17,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, activeTab, onTabChange, onAddClick }: MainLayoutProps) {
   const { signOut, user } = useAuth();
+  const t = useTranslations();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -23,7 +26,7 @@ export function MainLayout({ children, activeTab, onTabChange, onAddClick }: Mai
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BookOpen className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">学习助手</h1>
+              <h1 className="text-xl font-bold">{t('appName')}</h1>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground hidden sm:inline">
@@ -31,8 +34,11 @@ export function MainLayout({ children, activeTab, onTabChange, onAddClick }: Mai
               </span>
               <Button variant="ghost" size="sm" onClick={() => signOut()} className="gap-2">
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">退出</span>
+                <span className="hidden sm:inline">{t('logout')}</span>
               </Button>
+              <div className="ml-2">
+                <LanguageSwitcher />
+              </div>
             </div>
           </div>
         </div>
@@ -44,17 +50,17 @@ export function MainLayout({ children, activeTab, onTabChange, onAddClick }: Mai
             <TabsList className="w-full sm:w-auto">
               <TabsTrigger value="review" className="flex-1 sm:flex-initial gap-2">
                 <Calendar className="h-4 w-4" />
-                今日复习
+                {t('reviewTab')}
               </TabsTrigger>
               <TabsTrigger value="manage" className="flex-1 sm:flex-initial gap-2">
                 <BookOpen className="h-4 w-4" />
-                知识点管理
+                {t('manageTab')}
               </TabsTrigger>
             </TabsList>
             {activeTab === 'manage' && onAddClick && (
               <Button onClick={onAddClick} className="gap-2 w-full sm:w-auto">
                 <Plus className="h-4 w-4" />
-                添加知识点
+                {t('addKnowledgePoint')}
               </Button>
             )}
           </div>
