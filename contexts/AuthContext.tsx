@@ -12,6 +12,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshToken: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -176,6 +177,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshToken = async (): Promise<boolean> => {
+    try {
+      // 获取当前的refresh token
+      const allKeys = Object.keys(localStorage);
+      const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));
+      
+      for (const key of supabaseKeys) {
+        try {
+          const data = localStorage.getItem(key);
+          if (data) {
+            const parsed = JSON.parse(data);
+            if (parsed.refresh_token) {
+              console.log('🔄 Attempting to refresh token...');
+              const refreshResponse = await supabaseFetch.refreshSession(parsed.refresh_token);
+              
+              if (refreshResponse.access_token && refreshResponse.user) {
+                console.log('✅ Token refreshed successfully');
+                setUser(refreshResponse.user);
+                setAccessToken(refreshResponse.access_token);
+
+                // 更新localStorage
+                const updatedAuthData = {
+                  user: refreshResponse.user,
+                  access_token: refreshResponse.access_token,
+                  refresh_token: refreshResponse.refresh_token,
+                  expires_at: refreshResponse.expires_at,
+                  token_type: refreshResponse.token_type
+                };
+                localStorage.setItem(key, JSON.stringify(updatedAuthData));
+                return true;
+              }
+            }
+          }
+        } catch (e) {
+          // 忽略解析错误，继续尝试下一个key
+        }
+      }
+      
+      console.log('❌ No valid refresh token found');
+      return false;
+    } catch (error) {
+      console.log('❌ Token refresh failed:', error);
+      return false;
+    }
+  };
+
   const signOut = async () => {
     console.log('🚪 Signing out...');
     if (accessToken) {
@@ -206,7 +253,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading: isClient ? loading : true,
       signUp,
       signIn,
-      signOut
+      signOut,
+      refreshToken
     }}>
       {children}
     </AuthContext.Provider>

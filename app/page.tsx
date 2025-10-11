@@ -23,13 +23,34 @@ import { Button } from '@/components/ui/button';
 import { Calendar, BookOpen, Plus } from 'lucide-react';
 
 export default function Home() {
-  const { user, accessToken, loading: authLoading } = useAuth();
+  const { user, accessToken, loading: authLoading, refreshToken } = useAuth();
   const [activeTab, setActiveTab] = useState('review');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPoint, setEditingPoint] = useState<KnowledgePointWithSchedule | null>(null);
   const [knowledgePoints, setKnowledgePoints] = useState<KnowledgePointWithSchedule[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 通用的API调用包装函数，处理认证错误
+  const apiCall = async <T,>(apiFunction: () => Promise<T>): Promise<T> => {
+    try {
+      return await apiFunction();
+    } catch (error: any) {
+      // 如果是认证错误，尝试刷新token
+      if (error.message?.includes('认证已过期') || error.message?.includes('401')) {
+        console.log('🔄 Authentication error detected, attempting token refresh...');
+        const refreshSuccess = await refreshToken();
+        if (refreshSuccess) {
+          console.log('✅ Token refreshed, retrying API call...');
+          return await apiFunction();
+        } else {
+          console.log('❌ Token refresh failed, user needs to re-login');
+          throw error;
+        }
+      }
+      throw error;
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -41,8 +62,8 @@ export default function Home() {
     setLoading(true);
     try {
       const [points, todayReviews] = await Promise.all([
-        getAllKnowledgePoints(user!.id, accessToken!),
-        getTodayReviews(user!.id, accessToken!),
+        apiCall(() => getAllKnowledgePoints(user!.id, accessToken!)),
+        apiCall(() => getTodayReviews(user!.id, accessToken!)),
       ]);
       setKnowledgePoints(points);
       setReviews(todayReviews);
@@ -61,10 +82,10 @@ export default function Home() {
   const handleSaveKnowledgePoint = async (question: string, answer: string) => {
     try {
       if (editingPoint) {
-        await updateKnowledgePoint(editingPoint.id, question, answer, accessToken!);
+        await apiCall(() => updateKnowledgePoint(editingPoint.id, question, answer, accessToken!));
         toast.success('知识点已更新');
       } else {
-        await createKnowledgePoint(question, answer, accessToken!);
+        await apiCall(() => createKnowledgePoint(question, answer, accessToken!));
         toast.success('知识点已添加！复习计划：1天后、7天后、16天后、35天后各复习一次');
       }
       await loadData();
@@ -77,7 +98,7 @@ export default function Home() {
 
   const handleDeleteKnowledgePoint = async (id: string) => {
     try {
-      await deleteKnowledgePoint(id, accessToken!);
+      await apiCall(() => deleteKnowledgePoint(id, accessToken!));
       toast.success('知识点已删除');
       await loadData();
     } catch (error) {
@@ -99,7 +120,7 @@ export default function Home() {
 
   const handleCompleteReview = async (scheduleId: string, recallText: string) => {
     try {
-      await completeReview(scheduleId, recallText, accessToken!);
+      await apiCall(() => completeReview(scheduleId, recallText, accessToken!));
       toast.success('复习已完成');
       await loadData();
     } catch (error) {

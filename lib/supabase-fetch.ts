@@ -77,6 +77,19 @@ class SupabaseFetchClient {
 
     if (!response.ok) {
       const errorText = await response.text();
+      
+      // 处理401未授权错误
+      if (response.status === 401) {
+        console.log('🔒 Authentication failed, clearing auth data');
+        // 清除localStorage中的认证数据
+        this.clearAuthData();
+        // 重定向到登录页
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+        throw new Error('认证已过期，请重新登录');
+      }
+      
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
@@ -86,6 +99,20 @@ class SupabaseFetchClient {
     }
 
     return await response.json();
+  }
+
+  /**
+   * 清除认证数据
+   */
+  private clearAuthData() {
+    if (typeof window !== 'undefined') {
+      const allKeys = Object.keys(localStorage);
+      const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));
+      supabaseKeys.forEach(key => {
+        localStorage.removeItem(key);
+        console.log('🗑️ Removed localStorage key:', key);
+      });
+    }
   }
 
   /**
