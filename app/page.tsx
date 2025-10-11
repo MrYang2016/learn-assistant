@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, BookOpen } from 'lucide-react';
 
 export default function Home() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, accessToken, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('review');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPoint, setEditingPoint] = useState<KnowledgePoint | null>(null);
@@ -36,27 +36,22 @@ export default function Home() {
     }
   }, [user]);
 
-  const loadData = async (retryCount = 0) => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      // 添加重试机制和缓存控制
       const [points, todayReviews] = await Promise.all([
-        getAllKnowledgePoints(),
-        getTodayReviews(),
+        getAllKnowledgePoints(user!.id, accessToken!),
+        getTodayReviews(user!.id, accessToken!),
       ]);
       setKnowledgePoints(points);
       setReviews(todayReviews);
     } catch (error) {
       console.error('Load data error:', error);
-
-      // 如果是网络错误且重试次数少于3次，则重试
-      if (retryCount < 3 && (error as any)?.message?.includes('fetch')) {
-        console.log(`Retrying load data, attempt ${retryCount + 1}`);
-        setTimeout(() => loadData(retryCount + 1), 1000 * (retryCount + 1));
-        return;
-      }
-
-      toast.error('加载数据失败，请刷新页面重试');
+      
+      // 降级方案：使用空数据，让用户可以正常使用应用
+      setKnowledgePoints([]);
+      setReviews([]);
+      toast.error('数据加载失败，但您可以继续使用应用');
     } finally {
       setLoading(false);
     }
@@ -65,10 +60,10 @@ export default function Home() {
   const handleSaveKnowledgePoint = async (question: string, answer: string) => {
     try {
       if (editingPoint) {
-        await updateKnowledgePoint(editingPoint.id, question, answer);
+        await updateKnowledgePoint(editingPoint.id, question, answer, accessToken!);
         toast.success('知识点已更新');
       } else {
-        await createKnowledgePoint(question, answer);
+        await createKnowledgePoint(question, answer, accessToken!);
         toast.success('知识点已添加，复习计划已自动生成');
       }
       await loadData();
@@ -81,7 +76,7 @@ export default function Home() {
 
   const handleDeleteKnowledgePoint = async (id: string) => {
     try {
-      await deleteKnowledgePoint(id);
+      await deleteKnowledgePoint(id, accessToken!);
       toast.success('知识点已删除');
       await loadData();
     } catch (error) {
@@ -103,7 +98,7 @@ export default function Home() {
 
   const handleCompleteReview = async (scheduleId: string, recallText: string) => {
     try {
-      await completeReview(scheduleId, recallText);
+      await completeReview(scheduleId, recallText, accessToken!);
       toast.success('复习已完成');
       await loadData();
     } catch (error) {

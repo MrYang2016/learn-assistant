@@ -1,23 +1,34 @@
 import { supabase, KnowledgePoint } from './supabase';
+import { supabaseFetch } from './supabase-fetch';
 
 const REVIEW_INTERVALS = [1, 7, 16, 35];
 
-export async function createKnowledgePoint(question: string, answer: string) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+export async function createKnowledgePoint(question: string, answer: string, accessToken?: string) {
+  if (!accessToken) {
+    throw new Error('Access token required for creating knowledge points');
+  }
 
-  const { data: knowledgePoint, error: kpError } = await supabase
-    .from('knowledge_points')
-    .insert({
+  // 获取用户信息
+  const userResponse = await supabaseFetch.getUser(accessToken);
+  const user = userResponse.user;
+  
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
+
+  // 创建知识点
+  const knowledgePoint = await supabaseFetch.insert<KnowledgePoint>(
+    'knowledge_points',
+    {
       user_id: user.id,
       question,
       answer,
-    })
-    .select()
-    .single();
+    },
+    { columns: '*' },
+    accessToken
+  );
 
-  if (kpError) throw kpError;
-
+  // 创建复习计划
   const schedules = REVIEW_INTERVALS.map((days, index) => {
     const reviewDate = new Date();
     reviewDate.setDate(reviewDate.getDate() + days);
@@ -31,95 +42,81 @@ export async function createKnowledgePoint(question: string, answer: string) {
     };
   });
 
-  const { error: scheduleError } = await supabase
-    .from('review_schedules')
-    .insert(schedules);
-
-  if (scheduleError) throw scheduleError;
+  await supabaseFetch.insert('review_schedules', schedules, {}, accessToken);
 
   return knowledgePoint;
 }
 
-export async function updateKnowledgePoint(id: string, question: string, answer: string) {
-  const { data, error } = await supabase
-    .from('knowledge_points')
-    .update({
-      question,
-      answer,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function updateKnowledgePoint(id: string, question: string, answer: string, accessToken?: string) {
+  return supabaseFetch.update(
+    'knowledge_points',
+    { question, answer, updated_at: new Date().toISOString() },
+    { id },
+    { columns: '*' },
+    accessToken
+  );
 }
 
-export async function deleteKnowledgePoint(id: string) {
-  const { error } = await supabase
-    .from('knowledge_points')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+export async function deleteKnowledgePoint(id: string, accessToken?: string) {
+  await supabaseFetch.delete('knowledge_points', { id }, accessToken);
 }
 
-export async function getAllKnowledgePoints() {
-  const { data, error } = await supabase
-    .from('knowledge_points')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data as KnowledgePoint[];
+export async function getAllKnowledgePoints(userId: string, accessToken?: string) {
+  return supabaseFetch.select<KnowledgePoint>(
+    'knowledge_points',
+    {
+      columns: '*',
+      filters: { user_id: userId },
+      order: { column: 'created_at', ascending: false }
+    },
+    accessToken
+  );
 }
 
-export async function getTodayReviews() {
+export async function getTodayReviews(userId: string, accessToken?: string) {
   const today = new Date().toISOString().split('T')[0];
-
-  const { data, error } = await supabase
-    .from('review_schedules')
-    .select(`
-      *,
-      knowledge_points (*)
-    `)
-    .lte('review_date', today)
-    .eq('completed', false)
-    .order('review_date', { ascending: true });
-
-  if (error) throw error;
-  return data;
+  
+  return supabaseFetch.select(
+    'review_schedules',
+    {
+      columns: '*,knowledge_points(*)',
+      filters: { 
+        user_id: userId,
+        review_date: `lte.${today}`,
+        completed: false
+      },
+      order: { column: 'review_date', ascending: true }
+    },
+    accessToken
+  );
 }
 
-export async function completeReview(scheduleId: string, recallText: string) {
-  const { error } = await supabase
-    .from('review_schedules')
-    .update({
+export async function completeReview(scheduleId: string, recallText: string, accessToken?: string) {
+  await supabaseFetch.update(
+    'review_schedules',
+    {
       completed: true,
       completed_at: new Date().toISOString(),
       recall_text: recallText,
-    })
-    .eq('id', scheduleId);
-
-  if (error) throw error;
+    },
+    { id: scheduleId },
+    {},
+    accessToken
+  );
 }
 
-export async function getKnowledgePointWithSchedules(id: string) {
-  const { data, error } = await supabase
-    .from('knowledge_points')
-    .select(`
-      *,
-      review_schedules (*)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function getKnowledgePointWithSchedules(id: string, accessToken?: string) {
+  return supabaseFetch.select(
+    'knowledge_points',
+    {
+      columns: '*,review_schedules(*)',
+      filters: { id }
+    },
+    accessToken
+  );
 }
 
-export async function createDefaultKnowledgePoints() {
+export async function createDefaultKnowledgePoints(accessToken: string) {
   const defaultKnowledgePoints = [
     {
       question: '什么是主动回忆？',
@@ -134,7 +131,7 @@ export async function createDefaultKnowledgePoints() {
   const createdPoints = [];
 
   for (const point of defaultKnowledgePoints) {
-    const knowledgePoint = await createKnowledgePoint(point.question, point.answer);
+    const knowledgePoint = await createKnowledgePoint(point.question, point.answer, accessToken);
     createdPoints.push(knowledgePoint);
   }
 
