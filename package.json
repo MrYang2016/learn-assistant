@@ -6,7 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "pm2:start": "git pull && npm run build && pm2 startOrRestart ecosystem.config.js",
+    "pm2:start:dev": "pm2 start ecosystem.config.js --env development",
+    "pm2:start:staging": "pm2 start ecosystem.config.js --env staging",
+    "pm2:stop": "pm2 stop learn-assistant",
+    "pm2:restart": "pm2 restart learn-assistant",
+    "pm2:reload": "pm2 reload learn-assistant",
+    "pm2:delete": "pm2 delete learn-assistant",
+    "pm2:logs": "pm2 logs learn-assistant",
+    "pm2:monit": "pm2 monit"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -33,6 +42,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
+    "pm2": "^5.3.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
