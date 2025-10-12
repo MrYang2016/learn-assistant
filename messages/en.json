@@ -74,6 +74,8 @@
   "fourthReview": "Fourth Review",
   "nthReview": "Review {num}",
   "scheduledDate": "Scheduled Date: ",
+  "marking": "Marking...",
+  "markAsReviewed": "Mark as Reviewed",
   "metadata": {
     "title": "Learning Assistant - Spaced Repetition and Active Recall",
     "description": "Use spaced repetition and active recall to improve memory"
