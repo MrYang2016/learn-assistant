@@ -58,6 +58,7 @@
   "loginFailed": "Login failed",
   "signupSuccess": "Signup successful, auto-logged in",
   "signupFailed": "Signup failed",
+  "autoRegisterSuccess": "Account created and logged in successfully!",
   "pointUpdated": "Knowledge point updated",
   "pointAdded": "Knowledge point added! Review plan: in 1 day, 7 days, 16 days, 35 days",
   "updateFailed": "Update failed",

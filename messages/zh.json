@@ -58,6 +58,7 @@
   "loginFailed": "登录失败",
   "signupSuccess": "注册成功，已自动登录",
   "signupFailed": "注册失败",
+  "autoRegisterSuccess": "账号已创建并自动登录成功！",
   "pointUpdated": "知识点已更新",
   "pointAdded": "知识点已添加！复习计划：1天后、7天后、16天后、35天后各复习一次",
   "updateFailed": "更新失败",

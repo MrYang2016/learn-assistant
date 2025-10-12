@@ -172,27 +172,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const response = await supabaseFetch.signIn(email, password);
-    // 更新状态
-    if (response.user) {
-      setUser(response.user);
-      setAccessToken(response.access_token);
+    try {
+      const response = await supabaseFetch.signIn(email, password);
+      // 更新状态
+      if (response.user) {
+        setUser(response.user);
+        setAccessToken(response.access_token);
 
-      // 保存到localStorage - 使用Supabase的标准格式
-      const authData = {
-        user: response.user,
-        access_token: response.access_token,
-        refresh_token: response.refresh_token,
-        expires_at: response.expires_at,
-        token_type: response.token_type
-      };
+        // 保存到localStorage - 使用Supabase的标准格式
+        const authData = {
+          user: response.user,
+          access_token: response.access_token,
+          refresh_token: response.refresh_token,
+          expires_at: response.expires_at,
+          token_type: response.token_type
+        };
 
-      // 尝试找到现有的Supabase key，如果没有则使用默认key
-      const allKeys = Object.keys(localStorage);
-      const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));
-      const authKey = supabaseKeys.length > 0 ? supabaseKeys[0] : 'sb-zuvgcqgetnmhlmjsxjrs-auth-token';
+        // 尝试找到现有的Supabase key，如果没有则使用默认key
+        const allKeys = Object.keys(localStorage);
+        const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));
+        const authKey = supabaseKeys.length > 0 ? supabaseKeys[0] : 'sb-zuvgcqgetnmhlmjsxjrs-auth-token';
 
-      localStorage.setItem(authKey, JSON.stringify(authData));
+        localStorage.setItem(authKey, JSON.stringify(authData));
+      }
+    } catch (error: any) {
+      // 检查是否是账号不存在的错误
+      if (error.message && (
+        error.message.includes('Invalid login credentials') ||
+        error.message.includes('User not found') ||
+        error.message.includes('Invalid email or password') ||
+        error.message.includes('400') ||
+        error.message.includes('401')
+      )) {
+        // 账号不存在，自动注册并登录
+        console.log('Account not found, auto-registering...');
+        await signUp(email, password);
+      } else {
+        // 其他错误，重新抛出
+        throw error;
+      }
     }
   };
 

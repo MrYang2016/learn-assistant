@@ -29,7 +29,13 @@ export function AuthForm() {
       toast.success(t('loginSuccess'));
       router.push({ pathname: '/' });
     } catch (error: any) {
-      toast.error(error.message || t('loginFailed'));
+      // 检查是否是自动注册的情况
+      if (error.message && error.message.includes('Registration successful')) {
+        toast.success(t('autoRegisterSuccess') || 'Account created and logged in successfully!');
+        router.push({ pathname: '/' });
+      } else {
+        toast.error(error.message || t('loginFailed'));
+      }
     } finally {
       setLoading(false);
     }
