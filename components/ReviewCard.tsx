@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, CircleCheck as CheckCircle2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface ReviewCardProps {
   question: string;
@@ -29,6 +29,7 @@ export function ReviewCard({
   const [recallText, setRecallText] = useState('');
 
   const t = useTranslations();
+  const locale = useLocale();
 
   const handleComplete = async () => {
     setCompleting(true);
@@ -56,7 +57,7 @@ export function ReviewCard({
           <Badge variant="secondary">{getReviewLabel(reviewNumber)}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          计划日期：{new Date(reviewDate).toLocaleDateString('zh-CN')}
+          {t('scheduledDate')}{new Date(reviewDate).toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en-US')}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -74,7 +75,7 @@ export function ReviewCard({
 
         <div className="flex items-center justify-between pt-2">
           <p className="text-sm font-medium">
-            {showAnswer ? t('correctAnswer') : t('showAnswerPrompt')}
+            {showAnswer ? t('correctAnswer') : t('showAnswer')}
           </p>
           <Button
             variant="outline"

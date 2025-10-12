@@ -73,6 +73,7 @@
   "thirdReview": "第三次复习",
   "fourthReview": "第四次复习",
   "nthReview": "第{num}次复习",
+  "scheduledDate": "计划日期：",
   "metadata": {
     "title": "学习助手 - 分散学习与主动回忆",
     "description": "使用分散学习和主动回忆提升记忆效果"
