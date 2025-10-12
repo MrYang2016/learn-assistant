@@ -50,15 +50,25 @@ export function AuthForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">{t('appName')}</CardTitle>
-          <CardDescription className="text-center">{t('welcomeDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#fafafa] to-gray-100 p-4">
+      <div className="w-full max-w-4xl flex flex-col md:flex-row bg-white rounded-2xl shadow-2xl overflow-hidden">
+        {/* Left side: Introduction */}
+        <div className="md:w-1/2 p-8 bg-gradient-to-br from-gray-700 to-gray-500 text-white flex flex-col justify-center">
+          <h1 className="text-3xl font-bold mb-4">{t('appName')}</h1>
+          <p className="mb-6 opacity-90">{t('introduction')}</p>
+          <ul className="space-y-3">
+            <li className="flex items-center gap-2">✅ {t('features.1')}</li>
+            <li className="flex items-center gap-2">✅ {t('features.2')}</li>
+            <li className="flex items-center gap-2">✅ {t('features.3')}</li>
+            <li className="flex items-center gap-2">✅ {t('features.4')}</li>
+          </ul>
+        </div>
+        {/* Right side: Form */}
+        <div className="md:w-1/2 p-8">
+          <h2 className="text-2xl font-bold mb-2 text-center">{t('welcome')}</h2>
+          <p className="text-center text-muted-foreground mb-6">{t('welcomeDescription')}</p>
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">{t('login')}</TabsTrigger>
               <TabsTrigger value="signup">{t('register')}</TabsTrigger>
             </TabsList>
@@ -73,6 +83,7 @@ export function AuthForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500"
                   />
                 </div>
                 <div className="space-y-2">
@@ -84,9 +95,10 @@ export function AuthForm() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-gray-600 hover:bg-gray-700" disabled={loading}>
                   {loading ? t('loggingIn') : t('login')}
                 </Button>
               </form>
@@ -102,6 +114,7 @@ export function AuthForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500"
                   />
                 </div>
                 <div className="space-y-2">
@@ -114,19 +127,20 @@ export function AuthForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
+                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-gray-600 hover:bg-gray-700" disabled={loading}>
                   {loading ? t('registering') : t('register')}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-        </CardContent>
-        <div className="absolute top-4 right-4">
-          <LanguageSwitcher />
         </div>
-      </Card>
+      </div>
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
     </div>
   );
 }

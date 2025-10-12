@@ -19,6 +19,32 @@ export async function generateMetadata({
     title: messages.metadata.title,
     description: messages.metadata.description,
     icons: '/favicon.svg',
+    openGraph: {
+      title: messages.metadata.title,
+      description: messages.metadata.description,
+      url: 'https://learn-assistant.aries-happy.com/', // Replace with actual domain
+      siteName: 'Learn Assistant',
+      images: [
+        {
+          url: '/og-image.png', // Add an OG image in public/ if needed
+          width: 1200,
+          height: 630,
+        },
+      ],
+      locale: locale,
+      type: 'website',
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
   };
 }
 

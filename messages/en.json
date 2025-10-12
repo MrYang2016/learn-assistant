@@ -79,5 +79,12 @@
   "metadata": {
     "title": "Learning Assistant - Spaced Repetition and Active Recall",
     "description": "Use spaced repetition and active recall to improve memory"
+  },
+  "introduction": "Learning Assistant helps you master knowledge through spaced repetition and active recall.",
+  "features": {
+    "1": "Add and manage knowledge points with questions and detailed answers.",
+    "2": "Automatic review scheduling: 1 day, 7 days, 16 days, and 35 days later.",
+    "3": "Practice active recall by writing what you remember before seeing the answer.",
+    "4": "Track your progress and review only what's due today."
   }
 }
