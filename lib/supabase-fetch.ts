@@ -77,7 +77,7 @@ class SupabaseFetchClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      
+
       // 处理401未授权错误
       if (response.status === 401) {
         console.log('🔒 Authentication failed, clearing auth data');
@@ -89,7 +89,7 @@ class SupabaseFetchClient {
         }
         throw new Error('认证已过期，请重新登录');
       }
-      
+
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 

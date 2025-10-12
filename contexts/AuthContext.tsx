@@ -69,11 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setAccessToken(authData.access_token);
           } else if (authData.refresh_token) {
             // Token过期，尝试刷新
-            console.log('🔄 Token expired, attempting refresh...');
             try {
               const refreshResponse = await supabaseFetch.refreshSession(authData.refresh_token);
               if (refreshResponse.access_token && refreshResponse.user) {
-                console.log('✅ Token refreshed successfully');
                 setUser(refreshResponse.user);
                 setAccessToken(refreshResponse.access_token);
 
@@ -112,31 +110,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const response = await supabaseFetch.signUp(email, password);
+    let response;
+    try {
+      response = await supabaseFetch.signUp(email, password);
+    } catch (error) {
+      console.error('SignUp error:', error);
+      throw error;
+    }
 
-    // 如果注册成功，创建默认知识点并自动登录
-    if (response.user && response.access_token) {
+    // Normalize response: if it's a user object without nested user, wrap it
+    let user = response.user || response;
+    let access_token = response.access_token;
+    let refresh_token = response.refresh_token;
+    let expires_at = response.expires_at;
+    let token_type = response.token_type;
+
+    if (user && user.id && !access_token) {
       try {
-        console.log('📚 Creating default knowledge points for new user...');
-        await createDefaultKnowledgePoints(response.access_token);
-        console.log('✅ Default knowledge points created successfully');
+        response = await supabaseFetch.signIn(email, password);
+        user = response.user;
+        access_token = response.access_token;
+        refresh_token = response.refresh_token;
+        expires_at = response.expires_at;
+        token_type = response.token_type;
+      } catch (loginError) {
+        console.error('Auto SignIn error:', loginError);
+        throw new Error('Registration successful. Please check your email to confirm your account.');
+      }
+    }
+
+    if (user && user.id && access_token) {
+      try {
+        await createDefaultKnowledgePoints(access_token);
       } catch (error) {
         console.error('❌ Failed to create default knowledge points:', error);
         // 不抛出错误，因为用户注册已经成功
       }
 
       // 自动设置用户状态，实现自动登录
-      console.log('✅ Sign up successful, setting user state');
-      setUser(response.user);
-      setAccessToken(response.access_token);
+      setUser(user);
+      setAccessToken(access_token);
 
       // 保存到localStorage - 使用Supabase的标准格式
       const authData = {
-        user: response.user,
-        access_token: response.access_token,
-        refresh_token: response.refresh_token,
-        expires_at: response.expires_at,
-        token_type: response.token_type
+        user,
+        access_token,
+        refresh_token,
+        expires_at,
+        token_type
       };
 
       // 尝试找到现有的Supabase key，如果没有则使用默认key
@@ -145,16 +166,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authKey = supabaseKeys.length > 0 ? supabaseKeys[0] : 'sb-zuvgcqgetnmhlmjsxjrs-auth-token';
 
       localStorage.setItem(authKey, JSON.stringify(authData));
-      console.log('💾 Auth data saved to localStorage with key:', authKey);
+    } else {
+      throw new Error(`Registration failed: ${JSON.stringify(response)}`);
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log('🔐 Signing in...');
     const response = await supabaseFetch.signIn(email, password);
     // 更新状态
     if (response.user) {
-      console.log('✅ Sign in successful, setting user state');
       setUser(response.user);
       setAccessToken(response.access_token);
 
@@ -173,7 +193,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authKey = supabaseKeys.length > 0 ? supabaseKeys[0] : 'sb-zuvgcqgetnmhlmjsxjrs-auth-token';
 
       localStorage.setItem(authKey, JSON.stringify(authData));
-      console.log('💾 Auth data saved to localStorage with key:', authKey);
     }
   };
 
@@ -182,18 +201,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 获取当前的refresh token
       const allKeys = Object.keys(localStorage);
       const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));
-      
+
       for (const key of supabaseKeys) {
         try {
           const data = localStorage.getItem(key);
           if (data) {
             const parsed = JSON.parse(data);
             if (parsed.refresh_token) {
-              console.log('🔄 Attempting to refresh token...');
               const refreshResponse = await supabaseFetch.refreshSession(parsed.refresh_token);
-              
+
               if (refreshResponse.access_token && refreshResponse.user) {
-                console.log('✅ Token refreshed successfully');
                 setUser(refreshResponse.user);
                 setAccessToken(refreshResponse.access_token);
 
@@ -214,22 +231,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // 忽略解析错误，继续尝试下一个key
         }
       }
-      
-      console.log('❌ No valid refresh token found');
       return false;
     } catch (error) {
-      console.log('❌ Token refresh failed:', error);
       return false;
     }
   };
 
   const signOut = async () => {
-    console.log('🚪 Signing out...');
     if (accessToken) {
       try {
         await supabaseFetch.signOut(accessToken);
       } catch (error) {
-        console.log('Sign out error:', error);
+        console.error('Sign out error:', error);
       }
     }
 
@@ -242,7 +255,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabaseKeys = allKeys.filter(key => key.includes('supabase') || key.includes('sb-'));
     supabaseKeys.forEach(key => {
       localStorage.removeItem(key);
-      console.log('🗑️ Removed localStorage key:', key);
     });
   };
 
