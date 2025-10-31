@@ -6,6 +6,7 @@ import { MainLayout } from '@/components/MainLayout';
 import { KnowledgePointDialog } from '@/components/KnowledgePointDialog';
 import { KnowledgePointList } from '@/components/KnowledgePointList';
 import { ReviewCard } from '@/components/ReviewCard';
+import { ApiKeyManagement } from '@/components/ApiKeyManagement';
 import { useState, useEffect } from 'react';
 import { KnowledgePointWithSchedule } from '@/lib/supabase';
 import {
@@ -228,6 +229,10 @@ export default function Home() {
               />
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="apikey" className="mt-0">
+          <ApiKeyManagement />
         </TabsContent>
       </MainLayout>
 

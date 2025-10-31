@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Calendar, LogOut, Plus } from 'lucide-react';
+import { BookOpen, Calendar, LogOut, Plus, Key } from 'lucide-react';
 import { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -55,6 +55,10 @@ export function MainLayout({ children, activeTab, onTabChange, onAddClick }: Mai
               <TabsTrigger value="manage" className="flex-1 sm:flex-initial gap-2">
                 <BookOpen className="h-4 w-4" />
                 {t('manageTab')}
+              </TabsTrigger>
+              <TabsTrigger value="apikey" className="flex-1 sm:flex-initial gap-2">
+                <Key className="h-4 w-4" />
+                {t('apiKeyTab')}
               </TabsTrigger>
             </TabsList>
             {activeTab === 'manage' && onAddClick && (
