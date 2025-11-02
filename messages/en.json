@@ -119,5 +119,33 @@
     "prefix": "Prefix",
     "lastUsed": "Last used",
     "apiKeyTab": "API Key"
+  },
+  "mcpTab": "MCP",
+  "mcp": {
+    "title": "MCP Integration Setup",
+    "description": "Configure Cursor to connect to Learn Assistant MCP service",
+    "endpointTitle": "MCP Endpoint URL",
+    "endpointDescription": "The endpoint URL for Cursor to connect to the MCP service",
+    "apiKeyTitle": "API Key",
+    "apiKeyDescription": "Use API Key for authentication. Create one if you don't have any yet",
+    "createApiKey": "Create API Key",
+    "noApiKey": "You don't have an API Key yet. Please create one first",
+    "usingApiKey": "Currently using API Key",
+    "apiKeyHint": "Tip: You can go to the API Key Management page to create more API keys or manage existing ones",
+    "configTitle": "Cursor Configuration Example",
+    "configDescription": "Copy the following configuration to Cursor's MCP configuration file",
+    "copyConfig": "Copy Configuration",
+    "copied": "Copied",
+    "configCopied": "Configuration copied to clipboard",
+    "viewConfigPath": "View Config Path",
+    "configPath": "Configuration file path: {path}",
+    "step1": "Step 1:",
+    "step1Description": "Copy the configuration code above",
+    "step2": "Step 2:",
+    "step2Description": "Open Cursor's MCP configuration file (click the button above to view the path)",
+    "step3": "Step 3:",
+    "step3Description": "Paste the configuration into the file, save and restart Cursor",
+    "createApiKeyFirst": "Please create an API Key first",
+    "createApiKeyFirstDescription": "After creating an API Key, you will see the complete Cursor configuration example"
   }
 }

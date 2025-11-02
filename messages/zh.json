@@ -119,5 +119,33 @@
     "prefix": "前缀",
     "lastUsed": "最后使用",
     "apiKeyTab": "API Key"
+  },
+  "mcpTab": "MCP",
+  "mcp": {
+    "title": "MCP 接入配置",
+    "description": "配置 Cursor 以接入 Learn Assistant MCP 服务",
+    "endpointTitle": "MCP 端点地址",
+    "endpointDescription": "用于 Cursor 连接 MCP 服务的端点 URL",
+    "apiKeyTitle": "API Key",
+    "apiKeyDescription": "使用 API Key 进行身份验证，如果还没有 API Key，请先创建一个",
+    "createApiKey": "创建 API Key",
+    "noApiKey": "您还没有 API Key，请先创建一个",
+    "usingApiKey": "当前使用的 API Key",
+    "apiKeyHint": "提示：您可以前往 API Key 管理页面创建更多 API Key 或管理现有密钥",
+    "configTitle": "Cursor 配置示例",
+    "configDescription": "将以下配置复制到 Cursor 的 MCP 配置文件中",
+    "copyConfig": "复制配置",
+    "copied": "已复制",
+    "configCopied": "配置已复制到剪贴板",
+    "viewConfigPath": "查看配置文件路径",
+    "configPath": "配置文件路径：{path}",
+    "step1": "步骤 1：",
+    "step1Description": "复制上面的配置代码",
+    "step2": "步骤 2：",
+    "step2Description": "打开 Cursor 的 MCP 配置文件（点击上方按钮查看路径）",
+    "step3": "步骤 3：",
+    "step3Description": "将配置粘贴到文件中，保存并重启 Cursor",
+    "createApiKeyFirst": "请先创建 API Key",
+    "createApiKeyFirstDescription": "创建 API Key 后，您将看到完整的 Cursor 配置示例"
   }
 }

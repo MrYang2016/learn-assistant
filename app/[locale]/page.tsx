@@ -7,6 +7,7 @@ import { KnowledgePointDialog } from '@/components/KnowledgePointDialog';
 import { KnowledgePointList } from '@/components/KnowledgePointList';
 import { ReviewCard } from '@/components/ReviewCard';
 import { ApiKeyManagement } from '@/components/ApiKeyManagement';
+import { MCPSetup } from '@/components/MCPSetup';
 import { useState, useEffect } from 'react';
 import { KnowledgePointWithSchedule } from '@/lib/supabase';
 import {
@@ -233,6 +234,10 @@ export default function Home() {
 
         <TabsContent value="apikey" className="mt-0">
           <ApiKeyManagement />
+        </TabsContent>
+
+        <TabsContent value="mcp" className="mt-0">
+          <MCPSetup />
         </TabsContent>
       </MainLayout>
 
