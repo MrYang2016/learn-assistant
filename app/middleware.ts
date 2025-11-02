@@ -13,6 +13,13 @@ function getLocale(request: NextRequest) {
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  
+  // Skip API routes and static files
+  if (pathname.startsWith('/api/') || pathname.startsWith('/_next/') || pathname.includes('.')) {
+    return NextResponse.next();
+  }
+  
+  // Check if pathname is missing locale
   const pathnameIsMissingLocale = locales.every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
   );
@@ -29,7 +36,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip all internal paths (_next)
-    '/((?!_next).*)',
+    // Skip all internal paths (_next, api, static files)
+    '/((?!_next|api|.*\\..*).*)',
   ],
 };

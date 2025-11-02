@@ -4,8 +4,11 @@ import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/sonner';
 import { NextIntlClientProvider } from 'next-intl';
+import { notFound } from 'next/navigation';
 
 const inter = Inter({ subsets: ['latin'] });
+
+const locales = ['en', 'zh'];
 
 export async function generateMetadata({
   params,
@@ -13,6 +16,12 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  
+  // Validate locale
+  if (!locales.includes(locale)) {
+    notFound();
+  }
+  
   const messages = (await import(`../../messages/${locale}.json`)).default;
 
   return {
@@ -56,6 +65,12 @@ export default async function RootLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  
+  // Validate locale - if not valid, show 404
+  if (!locales.includes(locale)) {
+    notFound();
+  }
+  
   const messages = (await import(`../../messages/${locale}.json`)).default;
 
   return (
