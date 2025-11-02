@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, CircleCheck as CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, CircleCheck as CheckCircle2, GitCompare } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
+import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
 
 interface ReviewCardProps {
   question: string;
@@ -27,6 +29,8 @@ export function ReviewCard({
   const [showAnswer, setShowAnswer] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [recallText, setRecallText] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
   const t = useTranslations();
   const locale = useLocale();
@@ -38,6 +42,43 @@ export function ReviewCard({
     } catch (error) {
       console.error('Complete error:', error);
       setCompleting(false);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!recallText.trim()) {
+      toast.error(t('recallTextRequired'));
+      return;
+    }
+
+    setAnalyzing(true);
+    setAnalysisResult(null);
+    
+    try {
+      const response = await fetch('/api/analyze-recall', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recallText,
+          correctAnswer: answer,
+          question,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || t('analysisFailed'));
+      }
+
+      const data = await response.json();
+      setAnalysisResult(data.analysis);
+    } catch (error: any) {
+      console.error('Analyze error:', error);
+      toast.error(error.message || t('analysisFailed'));
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -99,7 +140,62 @@ export function ReviewCard({
 
         {showAnswer && (
           <div className="bg-muted p-4 rounded-lg">
-            <p className="text-sm whitespace-pre-wrap">{answer}</p>
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-sm mb-2">{children}</p>,
+                  h1: ({ children }) => <h1 className="text-base font-bold mb-2">{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-sm font-bold mb-2">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-sm font-semibold mb-1">{children}</h3>,
+                  ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1 text-sm">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1 text-sm">{children}</ol>,
+                  li: ({ children }) => <li className="text-sm">{children}</li>,
+                  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                  code: ({ children }) => <code className="bg-muted-foreground/20 px-1 py-0.5 rounded text-xs">{children}</code>,
+                }}
+              >
+                {answer}
+              </ReactMarkdown>
+            </div>
+          </div>
+        )}
+
+        {showAnswer && recallText.trim() && (
+          <div className="pt-2">
+            <Button
+              variant="outline"
+              onClick={handleAnalyze}
+              disabled={analyzing}
+              className="w-full gap-2"
+            >
+              <GitCompare className="h-4 w-4" />
+              {analyzing ? t('analyzing') : t('compareAnalysis')}
+            </Button>
+          </div>
+        )}
+
+        {analysisResult && (
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+            <h4 className="text-sm font-semibold mb-2 text-blue-900 dark:text-blue-100">
+              {t('analysisResult')}
+            </h4>
+            <div className="prose prose-sm dark:prose-invert max-w-none prose-blue dark:prose-blue">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-blue-800 dark:text-blue-200 mb-2">{children}</p>,
+                  h1: ({ children }) => <h1 className="text-blue-900 dark:text-blue-100 text-lg font-bold mb-2">{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-blue-900 dark:text-blue-100 text-base font-bold mb-2">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-blue-900 dark:text-blue-100 text-sm font-semibold mb-1">{children}</h3>,
+                  ul: ({ children }) => <ul className="list-disc list-inside text-blue-800 dark:text-blue-200 mb-2 space-y-1">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal list-inside text-blue-800 dark:text-blue-200 mb-2 space-y-1">{children}</ol>,
+                  li: ({ children }) => <li className="text-blue-800 dark:text-blue-200">{children}</li>,
+                  strong: ({ children }) => <strong className="text-blue-900 dark:text-blue-100 font-semibold">{children}</strong>,
+                  code: ({ children }) => <code className="bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded text-xs text-blue-900 dark:text-blue-100">{children}</code>,
+                }}
+              >
+                {analysisResult}
+              </ReactMarkdown>
+            </div>
           </div>
         )}
       </CardContent>

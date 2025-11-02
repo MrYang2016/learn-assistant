@@ -78,6 +78,11 @@
   "scheduledDate": "Scheduled Date: ",
   "marking": "Marking...",
   "markAsReviewed": "Mark as Reviewed",
+  "compareAnalysis": "Compare Analysis",
+  "analyzing": "Analyzing...",
+  "analysisResult": "Analysis Result",
+  "recallTextRequired": "Please enter your recall content first",
+  "analysisFailed": "Analysis failed, please try again",
   "metadata": {
     "title": "Learning Assistant - Spaced Repetition and Active Recall",
     "description": "Use spaced repetition and active recall to improve memory"

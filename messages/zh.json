@@ -78,6 +78,11 @@
   "scheduledDate": "计划日期：",
   "marking": "标记中...",
   "markAsReviewed": "标记为已复习",
+  "compareAnalysis": "对比分析",
+  "analyzing": "分析中...",
+  "analysisResult": "对比分析结果",
+  "recallTextRequired": "请先输入主动回忆内容",
+  "analysisFailed": "分析失败，请重试",
   "metadata": {
     "title": "学习助手 - 分散学习与主动回忆",
     "description": "使用分散学习和主动回忆提升记忆效果"
