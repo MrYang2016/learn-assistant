@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { LearnAssistantMCPServer } from '@/lib/mcp-server';
 import { verifyApiKey } from '@/lib/api-key-auth';
 import { randomUUID } from 'node:crypto';
+import { sessions, Session } from '@/lib/mcp-sessions';
 
 /**
  * MCP SSE API Route Handler
@@ -10,22 +11,6 @@ import { randomUUID } from 'node:crypto';
  * Authentication: API key via Authorization header (Bearer token)
  * Format: Authorization: Bearer <api_key>
  */
-
-// Store active sessions by session ID
-interface Session {
-  mcpServer: LearnAssistantMCPServer;
-  userId: string;
-  apiKeyId: string;
-  messageQueue: Array<{ id: string; message: any }>;
-  messageResolvers: Map<string, (response: any) => void>;
-}
-
-// Use global to share sessions across route handlers
-const globalSessions = (global as any).mcpSessions || new Map<string, Session>();
-(global as any).mcpSessions = globalSessions;
-
-// Export sessions for use in messages route
-export { globalSessions as sessions };
 
 /**
  * GET /api/mcp/sse - Establish SSE connection
@@ -72,7 +57,7 @@ export async function GET(request: NextRequest) {
       messageQueue: [],
       messageResolvers: new Map(),
     };
-    globalSessions.set(sessionId, session);
+    sessions.set(sessionId, session);
     console.log(`[MCP] Created SSE session ${sessionId} for user ${authResult.userId}`);
 
     // Create SSE stream
@@ -87,16 +72,16 @@ export async function GET(request: NextRequest) {
 
         // Handle messages from queue
         const processMessages = () => {
-          const currentSession = globalSessions.get(sessionId);
+          const currentSession = sessions.get(sessionId);
           if (!currentSession) return;
-          
+
           while (currentSession.messageQueue.length > 0) {
             const { id, message } = currentSession.messageQueue.shift()!;
             const data = JSON.stringify(message);
             // Use 'event: message' format as per MCP SSE spec
             controller.enqueue(encoder.encode(`event: message\ndata: ${data}\n\n`));
             console.log(`[MCP] Sent SSE message for request ${id}`);
-            
+
             // Resolve the promise if waiting
             const resolver = currentSession.messageResolvers.get(id);
             if (resolver) {
@@ -119,7 +104,7 @@ export async function GET(request: NextRequest) {
         // SSE connections timeout if no data is sent for too long
         const heartbeatInterval = setInterval(() => {
           try {
-            const currentSession = globalSessions.get(sessionId);
+            const currentSession = sessions.get(sessionId);
             if (!currentSession) {
               clearInterval(heartbeatInterval);
               clearInterval(messageInterval);
@@ -138,7 +123,7 @@ export async function GET(request: NextRequest) {
         request.signal.addEventListener('abort', () => {
           clearInterval(messageInterval);
           clearInterval(heartbeatInterval);
-          globalSessions.delete(sessionId);
+          sessions.delete(sessionId);
           try {
             controller.close();
           } catch (error) {
@@ -150,7 +135,7 @@ export async function GET(request: NextRequest) {
         setTimeout(() => {
           clearInterval(messageInterval);
           clearInterval(heartbeatInterval);
-          globalSessions.delete(sessionId);
+          sessions.delete(sessionId);
           try {
             controller.close();
           } catch (error) {

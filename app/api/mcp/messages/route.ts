@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sessions } from '../sse/route';
+import { sessions } from '@/lib/mcp-sessions';
 
 /**
  * POST /api/mcp/messages - Handle client messages for SSE transport
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       if (id && result) {
         session.messageQueue.push({ id: String(id), message: result });
         console.log(`[MCP] Queued response for request ${id}, method: ${method}`);
-        
+
         // Trigger immediate processing by setting a flag or directly notifying
         // The SSE stream will pick it up in the next poll cycle (100ms)
       }
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
           message: error.message || 'Internal error',
         },
       };
-      
+
       if (id) {
         session.messageQueue.push({ id: String(id), message: errorResult });
       }
