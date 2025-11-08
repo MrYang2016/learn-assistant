@@ -66,21 +66,21 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 w-full">
         {points.map((point) => {
           const nextReviewDate = getNextReviewDate(point);
           return (
-            <Card key={point.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg line-clamp-2">{point.question}</CardTitle>
+            <Card key={point.id} className="hover:shadow-md transition-shadow w-full max-w-full overflow-hidden">
+              <CardHeader className="w-full">
+                <div className="flex items-start justify-between gap-2 w-full">
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <CardTitle className="text-lg line-clamp-2 break-words">{point.question}</CardTitle>
                     <div className="mt-1 space-y-1">
-                      <CardDescription>
+                      <CardDescription className="break-words">
                         {t('createdAt')}{new Date(point.created_at).toLocaleDateString(locale)}
                       </CardDescription>
                       {nextReviewDate && (
-                        <CardDescription className="text-blue-600 font-medium">
+                        <CardDescription className="text-blue-600 font-medium break-words">
                           {t('nextReview')}{new Date(nextReviewDate).toLocaleDateString(locale)}
                         </CardDescription>
                       )}
@@ -108,8 +108,8 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">
+              <CardContent className="w-full">
+                <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap break-words overflow-hidden">
                   {point.answer}
                 </p>
               </CardContent>
