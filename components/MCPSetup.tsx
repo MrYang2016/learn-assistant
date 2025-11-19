@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Copy, Check, ExternalLink } from 'lucide-react';
+import { Plus, Copy, Check, ExternalLink, Settings, Server } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import {
   createApiKey,
   getAllApiKeys,
@@ -136,228 +137,285 @@ export function MCPSetup() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
         <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Server className="h-6 w-6 text-primary" />
           {t('mcp.title')}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
           {t('mcp.description')}
         </p>
-      </div>
+      </motion.div>
 
-      {/* MCP Endpoint URL */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('mcp.endpointTitle')}</CardTitle>
-          <CardDescription>{t('mcp.endpointDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <Input
-              value={mcpUrl}
-              readOnly
-              className="font-mono text-sm"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => copyToClipboard(mcpUrl)}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 md:grid-cols-1">
+        {/* MCP Endpoint URL */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card className="bg-card/50 backdrop-blur-sm border-border/60 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-indigo-500" />
+                {t('mcp.endpointTitle')}
+              </CardTitle>
+              <CardDescription>{t('mcp.endpointDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 bg-muted/50 p-1.5 rounded-xl border border-border/50">
+                <Input
+                  value={mcpUrl}
+                  readOnly
+                  className="font-mono text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copyToClipboard(mcpUrl)}
+                  className="rounded-lg hover:bg-background shadow-sm"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-      {/* API Key Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{t('mcp.apiKeyTitle')}</CardTitle>
-              <CardDescription>{t('mcp.apiKeyDescription')}</CardDescription>
-            </div>
-            {apiKeys.length === 0 && (
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => setNewPlainKey(null)}>
+        {/* API Key Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="bg-card/50 backdrop-blur-sm border-border/60 shadow-sm">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>{t('mcp.apiKeyTitle')}</CardTitle>
+                  <CardDescription>{t('mcp.apiKeyDescription')}</CardDescription>
+                </div>
+                {apiKeys.length === 0 && (
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setNewPlainKey(null)} className="gap-2 rounded-xl shadow-lg shadow-primary/20">
+                        <Plus className="h-4 w-4" />
+                        {t('mcp.createApiKey')}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{t('apiKeys.createTitle')}</DialogTitle>
+                        <DialogDescription>{t('apiKeys.createDescription')}</DialogDescription>
+                      </DialogHeader>
+                      {newPlainKey ? (
+                        <div className="space-y-4">
+                          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
+                            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+                              {t('apiKeys.warning')}
+                            </p>
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 font-mono text-sm break-all border border-border/50">
+                              {newPlainKey}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => copyToClipboard(newPlainKey)}
+                              className="flex-1 rounded-xl"
+                            >
+                              <Copy className="h-4 w-4 mr-2" />
+                              {t('apiKeys.copy')}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setDialogOpen(false);
+                                loadApiKeys();
+                                // Keep newPlainKey so the config example remains visible
+                              }}
+                              className="flex-1 rounded-xl"
+                            >
+                              {t('apiKeys.close')}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="key-name">{t('apiKeys.keyName')}</Label>
+                            <Input
+                              id="key-name"
+                              value={newKeyName}
+                              onChange={(e) => setNewKeyName(e.target.value)}
+                              placeholder={t('apiKeys.keyNamePlaceholder')}
+                              className="rounded-xl mt-1.5"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !creating) {
+                                  handleCreateApiKey();
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setDialogOpen(false);
+                                setNewKeyName('MCP');
+                              }}
+                              className="rounded-xl"
+                            >
+                              {t('cancel')}
+                            </Button>
+                            <Button onClick={handleCreateApiKey} disabled={creating} className="rounded-xl">
+                              {creating ? t('apiKeys.creating') : t('apiKeys.create')}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {apiKeys.length === 0 ? (
+                <div className="text-center py-8 bg-muted/20 rounded-xl border border-dashed border-border/60">
+                  <p className="text-muted-foreground mb-4">{t('mcp.noApiKey')}</p>
+                  <Button onClick={() => setDialogOpen(true)} variant="secondary" className="rounded-xl">
                     <Plus className="h-4 w-4 mr-2" />
                     {t('mcp.createApiKey')}
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t('apiKeys.createTitle')}</DialogTitle>
-                    <DialogDescription>{t('apiKeys.createDescription')}</DialogDescription>
-                  </DialogHeader>
-                  {newPlainKey ? (
-                    <div className="space-y-4">
-                      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                        <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
-                          {t('apiKeys.warning')}
-                        </p>
-                        <div className="bg-white dark:bg-gray-800 rounded p-3 font-mono text-sm break-all">
-                          {newPlainKey}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => copyToClipboard(newPlainKey)}
-                          className="flex-1"
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          {t('apiKeys.copy')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setDialogOpen(false);
-                            loadApiKeys();
-                            // Keep newPlainKey so the config example remains visible
-                          }}
-                          className="flex-1"
-                        >
-                          {t('apiKeys.close')}
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="key-name">{t('apiKeys.keyName')}</Label>
-                        <Input
-                          id="key-name"
-                          value={newKeyName}
-                          onChange={(e) => setNewKeyName(e.target.value)}
-                          placeholder={t('apiKeys.keyNamePlaceholder')}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !creating) {
-                              handleCreateApiKey();
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setDialogOpen(false);
-                            setNewKeyName('MCP');
-                          }}
-                        >
-                          {t('cancel')}
-                        </Button>
-                        <Button onClick={handleCreateApiKey} disabled={creating}>
-                          {creating ? t('apiKeys.creating') : t('apiKeys.create')}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {apiKeys.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">{t('mcp.noApiKey')}</p>
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                {t('mcp.createApiKey')}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground mb-2">
-                {t('mcp.usingApiKey')}: <span className="font-mono">{firstApiKey?.key_name}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t('mcp.apiKeyHint')}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </div>
+              ) : (
+                <div className="space-y-2 bg-muted/30 p-4 rounded-xl border border-border/40">
+                  <p className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    {t('mcp.usingApiKey')}: <span className="font-mono bg-background px-1.5 py-0.5 rounded text-foreground font-medium">{firstApiKey?.key_name}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground opacity-80 pl-6">
+                    {t('mcp.apiKeyHint')}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
 
-      {/* Cursor Configuration Example */}
-      {displayApiKey && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('mcp.configTitle')}</CardTitle>
-            <CardDescription>{t('mcp.configDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-muted rounded-lg p-4">
-              <pre className="text-sm font-mono overflow-x-auto">
-                <code>{getCursorConfig(displayApiKey)}</code>
-              </pre>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => copyToClipboard(getCursorConfig(displayApiKey))}
-                className="flex-1"
-              >
-                {copiedConfig ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    {t('mcp.copied')}
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    {t('mcp.copyConfig')}
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  // Detect platform based on user agent
-                  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-                  const isWindows = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('WIN') >= 0;
-                  
-                  const configPath = isMac
-                    ? '~/Library/Application Support/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json'
-                    : isWindows
-                    ? '%APPDATA%\\Cursor\\User\\globalStorage\\saoudrizwan.claude-dev\\settings\\cline_mcp_settings.json'
-                    : '~/.config/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json';
-                  toast.info(t('mcp.configPath', { path: configPath }));
-                }}
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                {t('mcp.viewConfigPath')}
-              </Button>
-            </div>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>{t('mcp.step1')}</strong> {t('mcp.step1Description')}
-              </p>
-              <p className="text-sm text-blue-800 dark:text-blue-200 mt-2">
-                <strong>{t('mcp.step2')}</strong> {t('mcp.step2Description')}
-              </p>
-              <p className="text-sm text-blue-800 dark:text-blue-200 mt-2">
-                <strong>{t('mcp.step3')}</strong> {t('mcp.step3Description')}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Cursor Configuration Example */}
+        {displayApiKey && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="bg-card/50 backdrop-blur-sm border-border/60 shadow-sm overflow-hidden">
+              <CardHeader className="bg-secondary/10 border-b border-border/40">
+                <CardTitle>{t('mcp.configTitle')}</CardTitle>
+                <CardDescription>{t('mcp.configDescription')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6 pt-6">
+                <div className="bg-[#1e1e1e] text-gray-300 rounded-xl p-4 shadow-inner border border-black/10 relative group">
+                  <pre className="text-sm font-mono overflow-x-auto">
+                    <code>{getCursorConfig(displayApiKey)}</code>
+                  </pre>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => copyToClipboard(getCursorConfig(displayApiKey))}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-white hover:bg-white/10"
+                  >
+                    {copiedConfig ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={() => copyToClipboard(getCursorConfig(displayApiKey))}
+                    className="flex-1 rounded-xl gap-2"
+                  >
+                    {copiedConfig ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        {t('mcp.copied')}
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        {t('mcp.copyConfig')}
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      // Detect platform based on user agent
+                      const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                      const isWindows = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('WIN') >= 0;
+                      
+                      const configPath = isMac
+                        ? '~/Library/Application Support/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json'
+                        : isWindows
+                        ? '%APPDATA%\\Cursor\\User\\globalStorage\\saoudrizwan.claude-dev\\settings\\cline_mcp_settings.json'
+                        : '~/.config/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json';
+                      toast.info(t('mcp.configPath', { path: configPath }));
+                    }}
+                    className="flex-1 rounded-xl gap-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {t('mcp.viewConfigPath')}
+                  </Button>
+                </div>
 
-      {!displayApiKey && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-lg font-medium mb-2">{t('mcp.createApiKeyFirst')}</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('mcp.createApiKeyFirstDescription')}
-            </p>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t('mcp.createApiKey')}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+                <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200/50 dark:border-blue-800/30 rounded-xl p-5 space-y-3">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                    <Server className="w-4 h-4" />
+                    Setup Instructions
+                  </h4>
+                  <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                    <p className="flex gap-2">
+                      <span className="font-bold min-w-[1.5rem] h-6 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center text-xs">1</span>
+                      <span>{t('mcp.step1')} {t('mcp.step1Description')}</span>
+                    </p>
+                    <p className="flex gap-2">
+                      <span className="font-bold min-w-[1.5rem] h-6 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center text-xs">2</span>
+                      <span>{t('mcp.step2')} {t('mcp.step2Description')}</span>
+                    </p>
+                    <p className="flex gap-2">
+                      <span className="font-bold min-w-[1.5rem] h-6 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center text-xs">3</span>
+                      <span>{t('mcp.step3')} {t('mcp.step3Description')}</span>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {!displayApiKey && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <Card className="bg-card/50 backdrop-blur-sm border-border/60 border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <p className="text-lg font-medium mb-2">{t('mcp.createApiKeyFirst')}</p>
+                <p className="text-sm text-muted-foreground mb-6 text-center max-w-md">
+                  {t('mcp.createApiKeyFirstDescription')}
+                </p>
+                <Button onClick={() => setDialogOpen(true)} className="rounded-xl shadow-lg shadow-primary/20">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('mcp.createApiKey')}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }

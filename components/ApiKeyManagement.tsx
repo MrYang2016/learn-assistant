@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Key, Copy, Trash2, Edit2, Eye, EyeOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   createApiKey,
   getAllApiKeys,
@@ -175,8 +176,8 @@ export function ApiKeyManagement() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setNewPlainKey(null)}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button onClick={() => setNewPlainKey(null)} className="gap-2 shadow-lg shadow-primary/20">
+              <Plus className="h-4 w-4" />
               {t('apiKeys.create')}
             </Button>
           </DialogTrigger>
@@ -187,18 +188,18 @@ export function ApiKeyManagement() {
             </DialogHeader>
             {newPlainKey ? (
               <div className="space-y-4">
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
                   <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
                     {t('apiKeys.warning')}
                   </p>
-                  <div className="bg-white dark:bg-gray-800 rounded p-3 font-mono text-sm break-all">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 font-mono text-sm break-all border border-border/50">
                     {newPlainKey}
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={() => copyToClipboard(newPlainKey)}
-                    className="flex-1"
+                    className="flex-1 rounded-xl"
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     {t('apiKeys.copy')}
@@ -209,7 +210,7 @@ export function ApiKeyManagement() {
                       setNewPlainKey(null);
                       setDialogOpen(false);
                     }}
-                    className="flex-1"
+                    className="flex-1 rounded-xl"
                   >
                     {t('apiKeys.close')}
                   </Button>
@@ -224,6 +225,7 @@ export function ApiKeyManagement() {
                     value={newKeyName}
                     onChange={(e) => setNewKeyName(e.target.value)}
                     placeholder={t('apiKeys.keyNamePlaceholder')}
+                    className="rounded-xl mt-1.5"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !creating) {
                         handleCreateApiKey();
@@ -238,10 +240,11 @@ export function ApiKeyManagement() {
                       setDialogOpen(false);
                       setNewKeyName('');
                     }}
+                    className="rounded-xl"
                   >
                     {t('cancel')}
                   </Button>
-                  <Button onClick={handleCreateApiKey} disabled={creating}>
+                  <Button onClick={handleCreateApiKey} disabled={creating} className="rounded-xl">
                     {creating ? t('apiKeys.creating') : t('apiKeys.create')}
                   </Button>
                 </div>
@@ -252,145 +255,165 @@ export function ApiKeyManagement() {
       </div>
 
       {apiKeys.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Key className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium mb-2">{t('apiKeys.noKeys')}</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('apiKeys.noKeysDescription')}
-            </p>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t('apiKeys.create')}
-            </Button>
-          </CardContent>
-        </Card>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <Card className="bg-card/50 backdrop-blur-sm border-border/60">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Key className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
+              <p className="text-lg font-medium mb-2">{t('apiKeys.noKeys')}</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t('apiKeys.noKeysDescription')}
+              </p>
+              <Button onClick={() => setDialogOpen(true)} className="gap-2 rounded-xl">
+                <Plus className="h-4 w-4" />
+                {t('apiKeys.create')}
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
       ) : (
         <div className="space-y-4">
-          {apiKeys.map((apiKey) => (
-            <Card key={apiKey.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    {editingId === apiKey.id ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleUpdateApiKey(apiKey.id);
-                            } else if (e.key === 'Escape') {
-                              setEditingId(null);
-                              setEditingName('');
-                            }
-                          }}
-                          className="flex-1"
-                          autoFocus
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => handleUpdateApiKey(apiKey.id)}
-                        >
-                          {t('save')}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingId(null);
-                            setEditingName('');
-                          }}
-                        >
-                          {t('cancel')}
-                        </Button>
+          <AnimatePresence mode="popLayout">
+            {apiKeys.map((apiKey, index) => (
+              <motion.div
+                key={apiKey.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                layout
+              >
+                <Card className="bg-card/50 backdrop-blur-sm border-border/60 hover:shadow-lg transition-all duration-300 group">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        {editingId === apiKey.id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleUpdateApiKey(apiKey.id);
+                                } else if (e.key === 'Escape') {
+                                  setEditingId(null);
+                                  setEditingName('');
+                                }
+                              }}
+                              className="flex-1 h-8 text-lg font-semibold"
+                              autoFocus
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleUpdateApiKey(apiKey.id)}
+                              className="h-8 rounded-lg"
+                            >
+                              {t('save')}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingId(null);
+                                setEditingName('');
+                              }}
+                              className="h-8 rounded-lg"
+                            >
+                              {t('cancel')}
+                            </Button>
+                          </div>
+                        ) : (
+                          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                            {apiKey.key_name}
+                          </CardTitle>
+                        )}
+                        <CardDescription className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                          <span>{t('apiKeys.prefix')}: <span className="font-mono text-foreground">{apiKey.prefix}</span>...</span>
+                          {apiKey.last_used_at && (
+                            <span>
+                              {t('apiKeys.lastUsed')}: {formatDate(apiKey.last_used_at)}
+                            </span>
+                          )}
+                          <span>
+                            {t('createdAt')} {formatDate(apiKey.created_at)}
+                          </span>
+                        </CardDescription>
                       </div>
-                    ) : (
-                      <CardTitle className="flex items-center gap-2">
-                        {apiKey.key_name}
-                      </CardTitle>
-                    )}
-                    <CardDescription className="mt-1">
-                      {t('apiKeys.prefix')}: {apiKey.prefix}...
-                      {apiKey.last_used_at && (
-                        <span className="ml-4">
-                          {t('apiKeys.lastUsed')}: {formatDate(apiKey.last_used_at)}
-                        </span>
-                      )}
-                      <span className="ml-4">
-                        {t('createdAt')} {formatDate(apiKey.created_at)}
-                      </span>
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingId(apiKey.id);
-                        setEditingName(apiKey.key_name);
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" variant="ghost">
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                      <div className="flex items-center gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingId(apiKey.id);
+                            setEditingName(apiKey.key_name);
+                          }}
+                          className="h-8 w-8 rounded-lg"
+                        >
+                          <Edit2 className="h-4 w-4" />
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t('apiKeys.deleteTitle')}</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            {t('apiKeys.deleteDescription')}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteApiKey(apiKey.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            {t('apiKeys.delete')}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-muted rounded-lg p-3 font-mono text-sm">
-                    {revealedKeys.has(apiKey.id) ? (
-                      <span className="break-all">{apiKey.api_key}</span>
-                    ) : (
-                      <span>{apiKey.prefix}...</span>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => toggleReveal(apiKey.id)}
-                  >
-                    {revealedKeys.has(apiKey.id) ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => copyToClipboard(revealedKeys.has(apiKey.id) ? apiKey.api_key : `${apiKey.prefix}...`)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t('apiKeys.deleteTitle')}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t('apiKeys.deleteDescription')}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteApiKey(apiKey.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {t('apiKeys.delete')}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-muted/50 rounded-lg p-3 font-mono text-sm border border-border/40 transition-colors hover:bg-muted/80">
+                        {revealedKeys.has(apiKey.id) ? (
+                          <span className="break-all">{apiKey.api_key}</span>
+                        ) : (
+                          <span>{apiKey.prefix}...</span>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toggleReveal(apiKey.id)}
+                        className="h-10 w-10 rounded-lg"
+                      >
+                        {revealedKeys.has(apiKey.id) ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyToClipboard(revealedKeys.has(apiKey.id) ? apiKey.api_key : `${apiKey.prefix}...`)}
+                        className="h-10 w-10 rounded-lg"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>

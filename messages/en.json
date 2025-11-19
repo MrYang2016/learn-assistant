@@ -152,5 +152,95 @@
     "step3Description": "Paste the configuration into the file, save and restart Cursor",
     "createApiKeyFirst": "Please create an API Key first",
     "createApiKeyFirstDescription": "After creating an API Key, you will see the complete Cursor configuration example"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "description": "Learn Assistant Privacy Policy",
+    "lastUpdated": "Last Updated",
+    "section1": {
+      "title": "1. Introduction",
+      "content": "Learn Assistant (hereinafter referred to as \"this application\") values your privacy. This privacy policy explains how we collect, use, store, and protect your personal information. By using this application, you agree to the terms of this privacy policy."
+    },
+    "section2": {
+      "title": "2. Information We Collect",
+      "intro": "To provide better services, we may collect the following information:",
+      "item1": "Account Information: including your email address, username, and other registration information",
+      "item2": "Learning Data: knowledge points you create, review records, active recall content, and other learning-related data",
+      "item3": "Usage Data: including how you use this application, access times, device information, etc.",
+      "item4": "Technical Information: including IP address, browser type, operating system, etc."
+    },
+    "section3": {
+      "title": "3. How We Use Information",
+      "intro": "We use the collected information for the following purposes:",
+      "item1": "Provide and maintain core features of this application, including knowledge point management, review scheduling, etc.",
+      "item2": "Improve and optimize user experience, analyze usage patterns to enhance service quality",
+      "item3": "Send important notifications, such as service updates, security reminders, etc.",
+      "item4": "Ensure service security, prevent fraud, abuse, and unauthorized access"
+    },
+    "section4": {
+      "title": "4. Information Storage and Security",
+      "content": "We employ industry-standard security measures to protect your personal information. Your data is stored on secure servers and transmitted and stored using encryption technology. We do not sell your personal information to third parties."
+    },
+    "section5": {
+      "title": "5. Third-Party Services",
+      "content": "This application uses Google OAuth for authentication. When you sign in with Google, we obtain your basic account information (such as email address). We do not access or store your Google account password. We use Supabase as our backend service provider, and your data will be processed according to Supabase's privacy policy."
+    },
+    "section6": {
+      "title": "6. Data Access and Control",
+      "content": "You can access, modify, or delete your personal information at any time. You can manage your account and data through the settings function within the application. If you wish to delete your account, please contact us."
+    },
+    "section7": {
+      "title": "7. Cookies and Tracking Technologies",
+      "content": "This application may use cookies and similar technologies to improve user experience. These technologies help us remember your preferences and provide personalized services. You can manage cookie preferences through your browser settings."
+    },
+    "section8": {
+      "title": "8. Contact Us",
+      "content": "If you have any questions or suggestions regarding this privacy policy, please contact us through the in-app feedback function or send an email to yxg2024@gmail.com."
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "description": "Learn Assistant Terms of Service",
+    "lastUpdated": "Last Updated",
+    "section1": {
+      "title": "1. Acceptance of Terms",
+      "content": "Welcome to Learn Assistant (hereinafter referred to as \"this service\"). By accessing or using this service, you agree to comply with these terms of service. If you do not agree to these terms, please do not use this service."
+    },
+    "section2": {
+      "title": "2. Service Description",
+      "intro": "Learn Assistant is a learning application based on spaced repetition and active recall, providing the following features:",
+      "item1": "Knowledge Point Management: create, edit, and delete learning knowledge points",
+      "item2": "Intelligent Review Scheduling: automatically schedule review times based on scientific algorithms",
+      "item3": "Active Recall Practice: deepen memory through active recall",
+      "item4": "Progress Tracking: view learning progress and review status in real-time"
+    },
+    "section3": {
+      "title": "3. User Accounts",
+      "content": "Using this service requires creating an account. You are responsible for maintaining the security and accuracy of your account information. You may not share your account with others or use your account for any illegal purposes. If you discover unauthorized use of your account, please notify us immediately."
+    },
+    "section4": {
+      "title": "4. User Conduct",
+      "content": "You agree not to use this service for any illegal activities, not to interfere with or disrupt the normal operation of the service, and not to attempt unauthorized access to systems or data. Violation of these terms may result in account suspension or termination."
+    },
+    "section5": {
+      "title": "5. Intellectual Property",
+      "content": "All content of this service, including but not limited to software, design, text, graphics, logos, etc., is protected by intellectual property laws. Without authorization, you may not copy, modify, distribute, or create derivative works."
+    },
+    "section6": {
+      "title": "6. Service Availability",
+      "content": "We strive to ensure continuous service availability but do not guarantee that the service will not be interrupted. We may suspend the service for maintenance, upgrades, or other reasons and will make every effort to notify users in advance."
+    },
+    "section7": {
+      "title": "7. Disclaimer",
+      "content": "This service is provided \"as is\" without any express or implied warranties. We do not guarantee the accuracy, completeness, or suitability of the service. You assume all risks associated with using this service."
+    },
+    "section8": {
+      "title": "8. Limitation of Liability",
+      "content": "To the maximum extent permitted by law, we shall not be liable for any direct, indirect, incidental, or consequential damages arising from the use or inability to use this service."
+    },
+    "section9": {
+      "title": "9. Modification of Terms",
+      "content": "We reserve the right to modify these terms of service at any time. Modified terms will be published on this page. Continued use of this service indicates your acceptance of the modified terms. If you do not agree to the modifications, please stop using this service."
+    }
   }
 }
