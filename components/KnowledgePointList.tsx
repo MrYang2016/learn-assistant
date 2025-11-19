@@ -37,7 +37,7 @@ const container = {
 const item = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-};
+} as const;
 
 export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
 
   if (points.length === 0) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         className="text-center py-20 bg-secondary/30 rounded-3xl border border-border/50 border-dashed"
@@ -86,7 +86,7 @@ export function KnowledgePointList({ points, onEdit, onDelete }: KnowledgePointL
 
   return (
     <>
-      <motion.div 
+      <motion.div
         variants={container}
         initial="hidden"
         animate="show"
