@@ -9,8 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, CircleCheck as CheckCircle2, GitCompare, Sparkles } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
-import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MarkdownPreview } from './MarkdownPreview';
 
 interface ReviewCardProps {
   question: string;
@@ -164,11 +164,7 @@ export function ReviewCard({
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('correctAnswer')}</h3>
                   </div>
                   
-                  <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-img:rounded-xl">
-                    <ReactMarkdown>
-                      {answer}
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownPreview content={answer} className="prose-sm" />
 
                   {recallText.trim() && (
                     <div className="pt-4 mt-4 border-t border-border/40">
@@ -195,11 +191,7 @@ export function ReviewCard({
                       <Sparkles className="w-4 h-4" />
                       {t('analysisResult')}
                     </h4>
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-blue dark:prose-blue">
-                      <ReactMarkdown>
-                        {analysisResult}
-                      </ReactMarkdown>
-                    </div>
+                    <MarkdownPreview content={analysisResult} className="prose-sm" />
                   </motion.div>
                 )}
               </motion.div>

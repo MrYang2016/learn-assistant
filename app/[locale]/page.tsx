@@ -3,37 +3,48 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthForm } from '@/components/AuthForm';
 import { MainLayout } from '@/components/MainLayout';
-import { KnowledgePointDialog } from '@/components/KnowledgePointDialog';
 import { KnowledgePointList } from '@/components/KnowledgePointList';
 import { ReviewCard } from '@/components/ReviewCard';
 import { ApiKeyManagement } from '@/components/ApiKeyManagement';
 import { MCPSetup } from '@/components/MCPSetup';
+import { ChatInterface } from '@/components/ChatInterface';
 import { useState, useEffect } from 'react';
 import { KnowledgePointWithSchedule } from '@/lib/supabase';
+import { useRouter } from '@/i18n';
 import {
-  createKnowledgePoint,
-  updateKnowledgePoint,
   deleteKnowledgePoint,
   getAllKnowledgePoints,
   getTodayReviews,
   completeReview,
+  getTodayReviewsCount,
+  getKnowledgePointsCount,
 } from '@/lib/knowledge-service';
 import { toast } from 'sonner';
 import { TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, BookOpen, Plus } from 'lucide-react';
+import { Calendar, BookOpen, Plus, MessageSquare, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export default function Home() {
   const { user, accessToken, loading: authLoading, refreshToken } = useAuth();
   const [activeTab, setActiveTab] = useState('review');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingPoint, setEditingPoint] = useState<KnowledgePointWithSchedule | null>(null);
   const [knowledgePoints, setKnowledgePoints] = useState<KnowledgePointWithSchedule[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // 分页状态
+  const [managePage, setManagePage] = useState(1);
+  const [reviewPage, setReviewPage] = useState(1);
+  const [hasMoreManage, setHasMoreManage] = useState(false);
+  const [hasMoreReview, setHasMoreReview] = useState(false);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [totalKnowledgePoints, setTotalKnowledgePoints] = useState(0);
+  const PAGE_SIZE = 20;
+
   const t = useTranslations();
+  const router = useRouter();
 
   // 通用的API调用包装函数，处理认证错误
   const apiCall = async <T,>(apiFunction: () => Promise<T>): Promise<T> => {
@@ -62,41 +73,88 @@ export default function Home() {
     }
   }, [user]);
 
-  const loadData = async () => {
+  const loadData = async (resetPagination = true) => {
     setLoading(true);
+    if (resetPagination) {
+      setManagePage(1);
+      setReviewPage(1);
+    }
     try {
-      const [points, todayReviews] = await Promise.all([
-        apiCall(() => getAllKnowledgePoints(user!.id, accessToken!)),
-        apiCall(() => getTodayReviews(user!.id, accessToken!)),
+      const [points, todayReviews, reviewsCount, pointsCount] = await Promise.all([
+        apiCall(() => getAllKnowledgePoints(user!.id, accessToken!, { page: 1, pageSize: PAGE_SIZE })),
+        apiCall(() => getTodayReviews(user!.id, accessToken!, { page: 1, pageSize: PAGE_SIZE })),
+        apiCall(() => getTodayReviewsCount(user!.id, accessToken!)),
+        apiCall(() => getKnowledgePointsCount(user!.id, accessToken!)),
       ]);
       setKnowledgePoints(points);
       setReviews(todayReviews);
+      setTotalReviews(reviewsCount);
+      setTotalKnowledgePoints(pointsCount);
+      setHasMoreManage(points.length >= PAGE_SIZE);
+      setHasMoreReview(todayReviews.length >= PAGE_SIZE);
     } catch (error) {
       console.error('Load data error:', error);
 
       // 降级方案：使用空数据，让用户可以正常使用应用
       setKnowledgePoints([]);
       setReviews([]);
+      setTotalReviews(0);
+      setTotalKnowledgePoints(0);
       toast.error(t('dataLoadFailed'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSaveKnowledgePoint = async (question: string, answer: string) => {
+  // 加载更多知识点（管理页面）
+  const loadMoreKnowledgePoints = async () => {
+    if (loadingMore || !hasMoreManage) return;
+
+    setLoadingMore(true);
     try {
-      if (editingPoint) {
-        await apiCall(() => updateKnowledgePoint(editingPoint.id, question, answer, accessToken!));
-        toast.success(t('pointUpdated'));
+      const nextPage = managePage + 1;
+      const morePoints = await apiCall(() =>
+        getAllKnowledgePoints(user!.id, accessToken!, { page: nextPage, pageSize: PAGE_SIZE })
+      );
+
+      if (morePoints.length > 0) {
+        setKnowledgePoints(prev => [...prev, ...morePoints]);
+        setManagePage(nextPage);
+        setHasMoreManage(morePoints.length >= PAGE_SIZE);
       } else {
-        await apiCall(() => createKnowledgePoint(question, answer, accessToken!));
-        toast.success(t('pointAdded'));
+        setHasMoreManage(false);
       }
-      await loadData();
     } catch (error) {
-      console.error('Save error:', error);
-      toast.error(editingPoint ? t('updateFailed') : t('addFailed'));
-      throw error;
+      console.error('Load more knowledge points error:', error);
+      toast.error(t('dataLoadFailed'));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // 加载更多复习项目
+  const loadMoreReviews = async () => {
+    if (loadingMore || !hasMoreReview) return;
+
+    setLoadingMore(true);
+    try {
+      const nextPage = reviewPage + 1;
+      const moreReviews = await apiCall(() =>
+        getTodayReviews(user!.id, accessToken!, { page: nextPage, pageSize: PAGE_SIZE })
+      );
+
+      if (moreReviews.length > 0) {
+        setReviews(prev => [...prev, ...moreReviews]);
+        setReviewPage(nextPage);
+        setHasMoreReview(moreReviews.length >= PAGE_SIZE);
+      } else {
+        setHasMoreReview(false);
+      }
+    } catch (error) {
+      console.error('Load more reviews error:', error);
+      toast.error(t('dataLoadFailed'));
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -112,15 +170,6 @@ export default function Home() {
     }
   };
 
-  const handleEditClick = (point: KnowledgePointWithSchedule) => {
-    setEditingPoint(point);
-    setDialogOpen(true);
-  };
-
-  const handleAddClick = () => {
-    setEditingPoint(null);
-    setDialogOpen(true);
-  };
 
   const handleCompleteReview = async (scheduleId: string, recallText: string) => {
     try {
@@ -154,7 +203,7 @@ export default function Home() {
       <MainLayout
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onAddClick={activeTab === 'manage' ? handleAddClick : undefined}
+        showAddButton={true}
       >
         <TabsContent value="review" className="mt-0">
           <div className="space-y-6">
@@ -162,14 +211,14 @@ export default function Home() {
               <div>
                 <h2 className="text-2xl font-bold flex items-center gap-2">
                   <Calendar className="h-6 w-6" />
-                  {t('todayReview', { count: reviews.length })}
+                  {t('todayReview', { count: totalReviews })}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   {t('useActiveRecall')}
                 </p>
               </div>
               <Badge variant="secondary" className="text-lg px-4 py-2">
-                {reviews.length} {t('pendingReviews')}
+                {totalReviews} {t('pendingReviews')}
               </Badge>
             </div>
 
@@ -184,25 +233,64 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground mt-2 mb-6">
                   {t('continueAddNewPoints')}
                 </p>
-                <Button onClick={handleAddClick} className="gap-2">
+                <Button onClick={() => router.push('/knowledge/new')} className="gap-2">
                   <Plus className="h-4 w-4" />
                   {t('addNewPoint')}
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <ReviewCard
-                    key={review.id}
-                    question={review.knowledge_points.question}
-                    answer={review.knowledge_points.answer}
-                    reviewNumber={review.review_number}
-                    reviewDate={review.review_date}
-                    onComplete={(recallText) => handleCompleteReview(review.id, recallText)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <ReviewCard
+                      key={review.id}
+                      question={review.knowledge_points.question}
+                      answer={review.knowledge_points.answer}
+                      reviewNumber={review.review_number}
+                      reviewDate={review.review_date}
+                      onComplete={(recallText) => handleCompleteReview(review.id, recallText)}
+                    />
+                  ))}
+                </div>
+                {hasMoreReview && (
+                  <div className="flex justify-center mt-6">
+                    <Button
+                      onClick={loadMoreReviews}
+                      disabled={loadingMore}
+                      className="gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:shadow-xl transition-all"
+                    >
+                      {loadingMore ? (
+                        <>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></div>
+                          {t('loading')}
+                        </>
+                      ) : (
+                        <>
+                          {t('loadMore')}
+                          <ChevronRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="chat" className="mt-0">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <MessageSquare className="h-6 w-6" />
+                {t('chatTitle') || 'AI助手'}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t('chatSubtitle') || '基于你的知识库智能回答问题'}
+              </p>
+            </div>
+
+            <ChatInterface />
           </div>
         </TabsContent>
 
@@ -225,8 +313,10 @@ export default function Home() {
             ) : (
               <KnowledgePointList
                 points={knowledgePoints}
-                onEdit={handleEditClick}
                 onDelete={handleDeleteKnowledgePoint}
+                hasMore={hasMoreManage}
+                onLoadMore={loadMoreKnowledgePoints}
+                loading={loadingMore}
               />
             )}
           </div>
@@ -240,13 +330,6 @@ export default function Home() {
           <MCPSetup />
         </TabsContent>
       </MainLayout>
-
-      <KnowledgePointDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSave={handleSaveKnowledgePoint}
-        editingPoint={editingPoint}
-      />
     </>
   );
 }

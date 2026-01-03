@@ -3,7 +3,47 @@ import { supabaseFetch } from './supabase-fetch';
 
 const REVIEW_INTERVALS = [1, 7, 16, 35];
 
-export async function createKnowledgePoint(question: string, answer: string, accessToken?: string) {
+/**
+ * 调用服务端 API 生成向量嵌入
+ */
+async function generateEmbeddingOnServer(
+  question: string,
+  answer: string,
+  userId: string,
+  accessToken: string
+): Promise<number[] | undefined> {
+  try {
+    const response = await fetch('/api/vectorize', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        question,
+        answer,
+        userId,
+        accessToken,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate embedding');
+    }
+
+    const data = await response.json();
+    return data.success ? data.embedding : undefined;
+  } catch (error) {
+    console.error('⚠️ Failed to generate embedding on server:', error);
+    return undefined;
+  }
+}
+
+export async function createKnowledgePoint(
+  question: string,
+  answer: string,
+  accessToken?: string,
+  isInReviewPlan: boolean = true
+) {
   if (!accessToken) {
     throw new Error('Access token required for creating knowledge points');
   }
@@ -15,6 +55,15 @@ export async function createKnowledgePoint(question: string, answer: string, acc
     throw new Error('Not authenticated');
   }
 
+  // 在服务端生成向量嵌入
+  const embedding = await generateEmbeddingOnServer(question, answer, user.id, accessToken);
+
+  if (embedding) {
+    console.log('✅ Generated embedding for knowledge point on server');
+  } else {
+    console.warn('⚠️ Creating knowledge point without embedding');
+  }
+
   // 创建知识点
   const knowledgePointResponse = await supabaseFetch.insert<KnowledgePoint[]>(
     'knowledge_points',
@@ -22,6 +71,8 @@ export async function createKnowledgePoint(question: string, answer: string, acc
       user_id: user.id,
       question,
       answer,
+      embedding: embedding ? `[${embedding.join(',')}]` : undefined,
+      is_in_review_plan: isInReviewPlan,
     },
     { columns: '*' },
     accessToken
@@ -29,14 +80,111 @@ export async function createKnowledgePoint(question: string, answer: string, acc
 
   const knowledgePoint = knowledgePointResponse[0];
 
-  // 创建复习计划
+  // 只在用户选择加入复习计划时创建复习计划
+  if (isInReviewPlan) {
+    const schedules = REVIEW_INTERVALS.map((days, index) => {
+      const reviewDate = new Date();
+      reviewDate.setDate(reviewDate.getDate() + days);
+
+      return {
+        knowledge_point_id: knowledgePoint.id,
+        user_id: user.id,
+        review_date: reviewDate.toISOString().split('T')[0],
+        review_number: index + 1,
+        completed: false,
+      };
+    });
+
+    await supabaseFetch.insert('review_schedules', schedules, {}, accessToken);
+  }
+
+  return knowledgePoint;
+}
+
+export async function updateKnowledgePoint(
+  id: string,
+  question: string,
+  answer: string,
+  accessToken?: string,
+  isInReviewPlan?: boolean
+) {
+  if (!accessToken) {
+    throw new Error('Access token required for updating knowledge points');
+  }
+
+  // 获取用户信息
+  const user = await supabaseFetch.getUser(accessToken);
+
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
+
+  // 在服务端生成新的向量嵌入
+  const embedding = await generateEmbeddingOnServer(question, answer, user.id, accessToken);
+
+  if (embedding) {
+    console.log('✅ Generated updated embedding for knowledge point on server');
+  } else {
+    console.warn('⚠️ Updating knowledge point without new embedding');
+  }
+
+  const updateData: any = {
+    question,
+    answer,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (embedding) {
+    updateData.embedding = `[${embedding.join(',')}]`;
+  }
+
+  // 如果指定了 isInReviewPlan，更新该字段
+  if (isInReviewPlan !== undefined) {
+    updateData.is_in_review_plan = isInReviewPlan;
+  }
+
+  const response = await supabaseFetch.update<KnowledgePoint[]>(
+    'knowledge_points',
+    updateData,
+    { id },
+    { columns: '*' },
+    accessToken
+  );
+
+  const updatedPoint = response[0];
+
+  // 如果从不在复习计划变为在复习计划中，需要创建复习计划
+  if (isInReviewPlan === true) {
+    await addToReviewPlan(id, user.id, accessToken);
+  }
+
+  return updatedPoint;
+}
+
+/**
+ * 将知识点加入复习计划
+ * 如果该知识点已有复习计划，则先删除旧的，然后创建新的
+ */
+export async function addToReviewPlan(knowledgePointId: string, userId: string, accessToken?: string) {
+  if (!accessToken) {
+    throw new Error('Access token required');
+  }
+
+  // 先删除该知识点的所有现有复习计划
+  await supabaseFetch.delete(
+    'review_schedules',
+    { knowledge_point_id: knowledgePointId },
+    accessToken
+  );
+
+  // 创建新的复习计划
   const schedules = REVIEW_INTERVALS.map((days, index) => {
     const reviewDate = new Date();
     reviewDate.setDate(reviewDate.getDate() + days);
 
     return {
-      knowledge_point_id: knowledgePoint.id,
-      user_id: user.id,
+      knowledge_point_id: knowledgePointId,
+      user_id: userId,
       review_date: reviewDate.toISOString().split('T')[0],
       review_number: index + 1,
       completed: false,
@@ -44,39 +192,43 @@ export async function createKnowledgePoint(question: string, answer: string, acc
   });
 
   await supabaseFetch.insert('review_schedules', schedules, {}, accessToken);
-
-  return knowledgePoint;
-}
-
-export async function updateKnowledgePoint(id: string, question: string, answer: string, accessToken?: string) {
-  const response = await supabaseFetch.update<KnowledgePoint[]>(
-    'knowledge_points',
-    { question, answer, updated_at: new Date().toISOString() },
-    { id },
-    { columns: '*' },
-    accessToken
-  );
-  return response[0];
 }
 
 export async function deleteKnowledgePoint(id: string, accessToken?: string) {
   await supabaseFetch.delete('knowledge_points', { id }, accessToken);
 }
 
-export async function getAllKnowledgePoints(userId: string, accessToken?: string) {
+export async function getAllKnowledgePoints(
+  userId: string,
+  accessToken?: string,
+  options?: { page?: number; pageSize?: number }
+) {
+  const page = options?.page ?? 1;
+  const pageSize = options?.pageSize ?? 20;
+  const offset = (page - 1) * pageSize;
+
   return supabaseFetch.select<KnowledgePoint>(
     'knowledge_points',
     {
       columns: '*,review_schedules(*)',
       filters: { user_id: userId },
-      order: { column: 'created_at', ascending: false }
+      order: { column: 'created_at', ascending: false },
+      limit: pageSize,
+      offset: offset
     },
     accessToken
   );
 }
 
-export async function getTodayReviews(userId: string, accessToken?: string) {
+export async function getTodayReviews(
+  userId: string,
+  accessToken?: string,
+  options?: { page?: number; pageSize?: number }
+) {
   const today = new Date().toISOString().split('T')[0];
+  const page = options?.page ?? 1;
+  const pageSize = options?.pageSize ?? 20;
+  const offset = (page - 1) * pageSize;
 
   return supabaseFetch.select(
     'review_schedules',
@@ -87,7 +239,34 @@ export async function getTodayReviews(userId: string, accessToken?: string) {
         review_date: `lte.${today}`,
         completed: false
       },
-      order: { column: 'review_date', ascending: true }
+      order: { column: 'review_date', ascending: true },
+      limit: pageSize,
+      offset: offset
+    },
+    accessToken
+  );
+}
+
+export async function getTodayReviewsCount(userId: string, accessToken?: string): Promise<number> {
+  const today = new Date().toISOString().split('T')[0];
+  return supabaseFetch.count(
+    'review_schedules',
+    {
+      filters: {
+        user_id: userId,
+        review_date: `lte.${today}`,
+        completed: false
+      }
+    },
+    accessToken
+  );
+}
+
+export async function getKnowledgePointsCount(userId: string, accessToken?: string): Promise<number> {
+  return supabaseFetch.count(
+    'knowledge_points',
+    {
+      filters: { user_id: userId }
     },
     accessToken
   );
@@ -133,7 +312,7 @@ export async function createDefaultKnowledgePoints(accessToken: string) {
   const createdPoints = [];
 
   for (const point of defaultKnowledgePoints) {
-    const knowledgePoint = await createKnowledgePoint(point.question, point.answer, accessToken);
+    const knowledgePoint = await createKnowledgePoint(point.question, point.answer, accessToken, true);
     createdPoints.push(knowledgePoint);
   }
 

@@ -168,6 +168,58 @@ class SupabaseFetchClient {
   }
 
   /**
+   * 获取总数
+   */
+  async count(
+    table: string,
+    options: {
+      filters?: Record<string, any>;
+    } = {},
+    accessToken?: string
+  ): Promise<number> {
+    const params: Record<string, any> = {};
+
+    if (options.filters) {
+      Object.entries(options.filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          // 如果值已经包含操作符（如 lte., gte., neq. 等），直接使用
+          if (typeof value === 'string' && value.includes('.')) {
+            params[key] = value;
+          } else {
+            params[key] = `eq.${value}`;
+          }
+        }
+      });
+    }
+
+    const queryString = this.buildQueryParams(params);
+    const endpoint = queryString ? `${table}?${queryString}` : table;
+
+    const url = `${this.config.url}/rest/v1/${endpoint}`;
+    const requestHeaders = this.buildHeaders(accessToken, { 'Prefer': 'count=exact' });
+
+    const response = await fetch(url, {
+      method: 'HEAD',
+      headers: requestHeaders,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    const contentRange = response.headers.get('content-range');
+    if (contentRange) {
+      const match = contentRange.match(/\/(\d+)$/);
+      if (match) {
+        return parseInt(match[1], 10);
+      }
+    }
+
+    return 0;
+  }
+
+  /**
    * 插入数据
    */
   async insert<T>(
