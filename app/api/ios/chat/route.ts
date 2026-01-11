@@ -20,7 +20,7 @@ const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 
 /**
  * Chat with AI - iOS API
- * Returns complete response (not streaming for iOS simplicity)
+ * Returns streaming response using Server-Sent Events
  */
 export async function POST(request: NextRequest) {
   try {
@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
 
       if (results.length > 0) {
         context = results
+          .filter((result) => result.similarity > 0.8)
           .map((result, index) => {
             return `[知识点 ${index + 1}] (相似度: ${(result.similarity * 100).toFixed(1)}%)
 问题: ${result.question}
@@ -109,19 +110,67 @@ ${context}
       },
     ];
 
-    // Get response from DeepSeek (non-streaming for iOS)
-    const completion = await deepseek.chat.completions.create({
+    // Create streaming response
+    const stream = await deepseek.chat.completions.create({
       model: DEEPSEEK_MODEL,
       messages,
+      stream: true,
       temperature: 0.7,
       max_tokens: 2000,
     });
 
-    const response = completion.choices[0]?.message?.content || '';
+    // Create a readable stream for the response
+    const encoder = new TextEncoder();
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        try {
+          // Send sources first
+          if (sources.length > 0) {
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  type: 'sources',
+                  sources: sources.map((s) => ({
+                    question: s.question,
+                    answer: s.answer,
+                    similarity: s.similarity,
+                  })),
+                })}\n\n`
+              )
+            );
+          }
 
-    return NextResponse.json({
-      response,
-      sources,
+          // Stream the chat response
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content;
+            if (content) {
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({
+                    type: 'content',
+                    content,
+                  })}\n\n`
+                )
+              );
+            }
+          }
+
+          // Send done signal
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          console.error('Streaming error:', error);
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(readableStream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
   } catch (error: any) {
     console.error('Chat API error:', error);

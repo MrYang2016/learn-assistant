@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
       if (results.length > 0) {
         // Format results as context for the LLM
         context = results
+          .filter((result) => result.similarity > 0.8)
           .map((result, index) => {
             return `[知识点 ${index + 1}] (相似度: ${(result.similarity * 100).toFixed(1)}%)
 问题: ${result.question}
