@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         'search_knowledge_points',
         {
           query_embedding: queryEmbedding,
-          match_threshold: 0.6,
+          match_threshold: 0.8,
           match_count: 3,
           filter_user_id: user.id,
         },
@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
 
       if (results.length > 0) {
         context = results
-          .filter((result) => result.similarity > 0.8)
           .map((result, index) => {
             return `[知识点 ${index + 1}] (相似度: ${(result.similarity * 100).toFixed(1)}%)
 问题: ${result.question}
