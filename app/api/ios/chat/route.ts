@@ -130,6 +130,7 @@ ${context}
                 `data: ${JSON.stringify({
                   type: 'sources',
                   sources: sources.map((s) => ({
+                    id: s.id,
                     question: s.question,
                     answer: s.answer,
                     similarity: s.similarity,
