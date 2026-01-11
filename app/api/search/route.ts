@@ -18,7 +18,7 @@ export interface SearchResult {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { query, userId, accessToken, matchThreshold = 0.7, matchCount = 5 } = await request.json();
+    const { query, userId, accessToken, matchThreshold = 0.8, matchCount = 5 } = await request.json();
 
     if (!query) {
       return NextResponse.json(
