@@ -6,9 +6,10 @@ import { supabaseFetch } from '@/lib/supabase-fetch';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -38,7 +39,7 @@ export async function POST(
         completed_at: new Date().toISOString(),
         recall_text: recallText || null,
       },
-      { id: params.id },
+      { id },
       {},
       accessToken
     );

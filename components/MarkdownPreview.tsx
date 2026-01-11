@@ -18,8 +18,10 @@ export function MarkdownPreview({ content, className = '' }: MarkdownPreviewProp
         rehypePlugins={[rehypeHighlight]}
         components={{
           // 自定义代码块样式
-          code: ({ node, inline, className, children, ...props }) => {
-            return inline ? (
+          code: ({ node, className, children, ...props }: any) => {
+            // 判断是否是内联代码：代码块会有 className（包含 language-），内联代码没有
+            const isInline = !className;
+            return isInline ? (
               <code className="px-1.5 py-0.5 rounded bg-muted text-sm font-mono" {...props}>
                 {children}
               </code>

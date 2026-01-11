@@ -9,6 +9,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { supabaseFetch } from '@/lib/supabase-fetch';
+import { KnowledgePoint } from '@/lib/supabase';
 
 export default function EditKnowledgePointPage() {
   const { accessToken, refreshToken, user } = useAuth();
@@ -38,7 +39,7 @@ export default function EditKnowledgePointPage() {
         );
 
         if (data && data.length > 0) {
-          const point = data[0];
+          const point = data[0] as KnowledgePoint;
           setInitialQuestion(point.question);
           setInitialAnswer(point.answer);
           setInitialIsInReviewPlan(point.is_in_review_plan ?? true);

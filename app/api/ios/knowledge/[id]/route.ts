@@ -18,9 +18,10 @@ interface KnowledgePoint {
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -68,7 +69,7 @@ export async function PUT(
     const result = await supabaseFetch.update<KnowledgePoint>(
       'knowledge_points',
       updateData,
-      { id: params.id, user_id: user.id },
+      { id, user_id: user.id },
       { columns: '*' },
       accessToken
     );
@@ -90,9 +91,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -115,14 +117,14 @@ export async function DELETE(
     // Delete review schedules first
     await supabaseFetch.delete(
       'review_schedules',
-      { knowledge_point_id: params.id },
+      { knowledge_point_id: id },
       accessToken
     );
 
     // Delete knowledge point
     await supabaseFetch.delete(
       'knowledge_points',
-      { id: params.id, user_id: user.id },
+      { id, user_id: user.id },
       accessToken
     );
 

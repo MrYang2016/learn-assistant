@@ -18,6 +18,8 @@ export interface KnowledgePoint {
   answer: string;
   created_at: string;
   updated_at: string;
+  embedding?: number[];
+  is_in_review_plan?: boolean;
 }
 
 export interface ReviewSchedule {
