@@ -17,6 +17,7 @@ interface ReviewSchedule {
 
 /**
  * Get today's reviews - iOS API
+ * Returns one review at a time with total count
  */
 export async function GET(request: NextRequest) {
   try {
@@ -40,8 +41,25 @@ export async function GET(request: NextRequest) {
     }
 
     const today = new Date().toISOString().split('T')[0];
+    const searchParams = request.nextUrl.searchParams;
+    const offset = parseInt(searchParams.get('offset') || '0', 10);
 
-    // Get today's reviews with knowledge points
+    // Get total count - use same query but only select id
+    const allReviews = await supabaseFetch.select<{ id: string }>(
+      'review_schedules',
+      {
+        columns: 'id,knowledge_points!inner(user_id)',
+        filters: {
+          review_date: `lte.${today}`,
+          completed: false,
+          'knowledge_points.user_id': user.id,
+        },
+      },
+      accessToken
+    );
+    const total = allReviews.length;
+
+    // Get one review at the specified offset
     const reviews = await supabaseFetch.select<ReviewSchedule>(
       'review_schedules',
       {
@@ -52,13 +70,17 @@ export async function GET(request: NextRequest) {
           'knowledge_points.user_id': user.id,
         },
         order: { column: 'review_date', ascending: true },
+        limit: 1,
+        offset: offset,
       },
       accessToken
     );
 
-    return NextResponse.json({ reviews });
+    return NextResponse.json({ 
+      reviews: reviews,
+      total: total
+    });
   } catch (error: any) {
-    console.error('Get reviews error:', error);
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }
