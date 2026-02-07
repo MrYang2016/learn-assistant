@@ -18,6 +18,8 @@ module.exports = {
         PORT: 3000,
         NEXT_PUBLIC_SUPABASE_URL: 'https://zuvgcqgetnmhlmjsxjrs.supabase.co',
         NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1dmdjcWdldG5taGxtanN4anJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjkxMTQsImV4cCI6MjA3NTE0NTExNH0.LMjDaDoAYcWmjYLYbcxxi4qbjij6YJwzy7Dzk7Vil7E',
+        // 对外 Ollama 接口鉴权（/api/ollama/chat），请改为你自己的密钥
+        OLLAMA_API_KEY: process.env.OLLAMA_API_KEY || '',
         // 添加网络超时配置
         NODE_OPTIONS: '--max-old-space-size=4096',
         UV_THREADPOOL_SIZE: 128
@@ -26,13 +28,15 @@ module.exports = {
         NODE_ENV: 'development',
         PORT: 3000,
         NEXT_PUBLIC_SUPABASE_URL: 'https://zuvgcqgetnmhlmjsxjrs.supabase.co',
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1dmdjcWdldG5taGxtanN4anJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjkxMTQsImV4cCI6MjA3NTE0NTExNH0.LMjDaDoAYcWmjYLYbcxxi4qbjij6YJwzy7Dzk7Vil7E'
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1dmdjcWdldG5taGxtanN4anJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjkxMTQsImV4cCI6MjA3NTE0NTExNH0.LMjDaDoAYcWmjYLYbcxxi4qbjij6YJwzy7Dzk7Vil7E',
+        OLLAMA_API_KEY: process.env.OLLAMA_API_KEY || ''
       },
       env_staging: {
         NODE_ENV: 'staging',
         PORT: 3000,
         NEXT_PUBLIC_SUPABASE_URL: 'https://zuvgcqgetnmhlmjsxjrs.supabase.co',
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1dmdjcWdldG5taGxtanN4anJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjkxMTQsImV4cCI6MjA3NTE0NTExNH0.LMjDaDoAYcWmjYLYbcxxi4qbjij6YJwzy7Dzk7Vil7E'
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1dmdjcWdldG5taGxtanN4anJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjkxMTQsImV4cCI6MjA3NTE0NTExNH0.LMjDaDoAYcWmjYLYbcxxi4qbjij6YJwzy7Dzk7Vil7E',
+        OLLAMA_API_KEY: process.env.OLLAMA_API_KEY || ''
       },
       log_file: './logs/combined.log',
       out_file: './logs/out.log',

@@ -109,6 +109,11 @@ npm run pm2:monit        # 监控面板
 3. **环境变量**：确保配置正确的Supabase连接信息
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - **Ollama 对外接口**（`/api/ollama/chat`，固定 API Key 鉴权、流式转发）：
+     - `OLLAMA_API_KEY`（必填）- 调用方需在请求头携带 `Authorization: Bearer <key>` 或 `X-API-Key: <key>`
+     - `OLLAMA_BASE_URL`（可选）- 默认 `http://127.0.0.1:11434/v1`
+     - `OLLAMA_MODEL`（可选）- 默认 `qwen2.5:7b`
+     - **设置位置**：本地开发在项目根目录的 `.env` 或 `.env.local` 里加一行 `OLLAMA_API_KEY=你的密钥`；用 PM2 时在启动前执行 `export OLLAMA_API_KEY=你的密钥`，或在 `ecosystem.config.js` 的 `env` 里写死（不推荐提交到仓库）
 
 4. **端口配置**：开发环境使用3001端口，生产环境使用3000端口
 
